@@ -64,12 +64,44 @@ export async function POST(req: NextRequest) {
     return mockStream(inputs);
   }
 
-  return dustStream({
-    apiKey,
-    workspaceId,
-    agentId,
-    systemPrompt: BASE_SYSTEM_PROMPT,
-    userMessage,
+  try {
+    return await dustStream({
+      apiKey,
+      workspaceId,
+      agentId,
+      systemPrompt: BASE_SYSTEM_PROMPT,
+      userMessage,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return errorStream(
+      `Dust request failed before streaming started: ${msg}. Check DUST_AGENT_ID exists in workspace ${workspaceId}. If you haven't created a custom assistant in Dust, create one with the event-sourcer system prompt and set DUST_AGENT_ID to its sId.`
+    );
+  }
+}
+
+function errorStream(message: string): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(
+        encoder.encode(
+          `data: ${JSON.stringify({
+            text: `_[Server error: ${message}]_`,
+          })}\n\n`
+        )
+      );
+      controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Arcticmind-Source": "error",
+    },
   });
 }
 
@@ -110,6 +142,8 @@ async function dustStream({
         context: {
           username: "arcticmind-event-sourcer",
           timezone: "America/New_York",
+          email: "arcticmind@arcticblue.ai",
+          fullName: "ArcticMind Event Sourcer",
         },
       },
       blocking: false,
@@ -118,13 +152,20 @@ async function dustStream({
 
   if (!createResp.ok) {
     const errText = await createResp.text().catch(() => "");
-    return new Response(
-      `Dust create-conversation failed: ${createResp.status} ${errText}`,
-      { status: 502 }
+    return errorStream(
+      `Dust create-conversation failed (${createResp.status}): ${errText.slice(
+        0,
+        400
+      )}. Workspace: ${workspaceId}, agent: ${agentId}.`
     );
   }
 
-  const created = await createResp.json();
+  const created = await createResp.json().catch(() => null);
+  if (!created) {
+    return errorStream(
+      `Dust create-conversation returned a non-JSON body. Workspace: ${workspaceId}, agent: ${agentId}.`
+    );
+  }
   const conversationSid: string | undefined =
     created?.conversation?.sId ?? created?.conversationSid;
   const agentMessage = created?.conversation?.content
@@ -134,11 +175,10 @@ async function dustStream({
     agentMessage?.sId ?? created?.message?.sId;
 
   if (!conversationSid || !agentMessageSid) {
-    return new Response(
-      `Dust response missing conversation or agent-message id. Raw: ${JSON.stringify(
+    return errorStream(
+      `Dust response missing conversation or agent-message id. The "${agentId}" assistant may not exist in workspace ${workspaceId}. Create a custom assistant in Dust and set DUST_AGENT_ID to its sId. Raw: ${JSON.stringify(
         created
-      ).slice(0, 400)}`,
-      { status: 502 }
+      ).slice(0, 500)}`
     );
   }
 
@@ -153,9 +193,12 @@ async function dustStream({
   });
 
   if (!eventsResp.ok || !eventsResp.body) {
-    return new Response(
-      `Dust event-stream failed: ${eventsResp.status}`,
-      { status: 502 }
+    const errBody = await eventsResp.text().catch(() => "");
+    return errorStream(
+      `Dust event-stream failed (${eventsResp.status}): ${errBody.slice(
+        0,
+        400
+      )}`
     );
   }
 
