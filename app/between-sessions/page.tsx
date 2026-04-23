@@ -26,7 +26,7 @@ export const metadata = { title: "Between sessions · ArcticMind" };
 
 export default function BetweenSessionsPage() {
   const featuredCase = USE_CASES[0];
-  const featuredPrompt = PROMPTS.find((p) => p.slug === "customer-interview-synthesis") ?? PROMPTS[0];
+  const featuredPrompt = PROMPTS[0];
   const featuredPlaybook = RESOURCES.find((r) => r.category === "playbook") ?? RESOURCES[0];
 
   return (

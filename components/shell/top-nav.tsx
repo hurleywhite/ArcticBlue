@@ -46,7 +46,6 @@ export function TopNav() {
               ArcticMind
             </span>
           </span>
-          <span className="kicker-sm hidden md:inline">by ArcticBlue</span>
         </Link>
 
         <nav className="flex items-center gap-1">

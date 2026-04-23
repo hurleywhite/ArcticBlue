@@ -70,7 +70,6 @@ export const LABS: Lab[] = [
 - Laptop, Claude or ChatGPT access, and the interview set.
 - One specific decision you were hoping the interviews would inform. We'll use it as the synthesis's target.`,
     pre_work_module_slugs: ["prompt-engineering-foundations", "experimentation-method"],
-    pre_work_prompt_slugs: ["customer-interview-synthesis"],
     session_datetime: iso(2026, 4, 29, 17, 0), // 29 Apr 2026, 5pm UTC
     session_duration_minutes: 90,
     meeting_url: "https://zoom.us/j/placeholder",

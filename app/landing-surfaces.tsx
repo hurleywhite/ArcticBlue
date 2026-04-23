@@ -19,7 +19,7 @@ export function LandingHero() {
         className="kicker flex items-center gap-3"
       >
         <span className="data-dot" />
-        ArcticMind · by ArcticBlue
+        ArcticMind
       </motion.div>
 
       <motion.h1
