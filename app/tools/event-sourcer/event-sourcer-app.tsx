@@ -5,6 +5,11 @@ import { motion } from "framer-motion";
 import { marked } from "marked";
 import { PARTNER_PRESETS, findPreset } from "@/lib/event-sourcer/partner-presets";
 import { composeUserMessage } from "@/lib/event-sourcer/compose";
+import {
+  parseEventOutput,
+  streamClassifyState,
+  type ParsedEvent,
+} from "@/lib/event-sourcer/parse";
 
 /*
   Event sourcer client.
@@ -67,6 +72,7 @@ export function EventSourcerApp() {
   const [hydrated, setHydrated] = useState(false);
   const [presetId, setPresetId] = useState<string>("");
   const [showPrompt, setShowPrompt] = useState(false);
+  const [viewMode, setViewMode] = useState<"cards" | "markdown">("cards");
   const outputRef = useRef<HTMLDivElement | null>(null);
 
   // Hydrate from localStorage once on mount.
@@ -240,6 +246,9 @@ export function EventSourcerApp() {
     () => (output ? (marked.parse(output, { async: false }) as string) : ""),
     [output]
   );
+
+  const parsed = useMemo(() => parseEventOutput(output), [output]);
+  const streamStatus = useMemo(() => streamClassifyState(output), [output]);
 
   const previewUserMessage = useMemo(() => {
     if (!requiredOk) return "";
@@ -540,9 +549,35 @@ export function EventSourcerApp() {
 
         {/* Right: output */}
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="kicker">Output</span>
+            {parsed.events.length > 0 && (
+              <span
+                className="font-mono text-[10px] uppercase tracking-[0.16em]"
+                style={{ color: "var(--frost)" }}
+              >
+                {parsed.events.length} event{parsed.events.length === 1 ? "" : "s"}
+              </span>
+            )}
             <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+            {output && !running && parsed.events.length > 0 && (
+              <div className="flex items-center gap-1">
+                <button
+                  className="chip"
+                  data-active={viewMode === "cards"}
+                  onClick={() => setViewMode("cards")}
+                >
+                  Cards
+                </button>
+                <button
+                  className="chip"
+                  data-active={viewMode === "markdown"}
+                  onClick={() => setViewMode("markdown")}
+                >
+                  Markdown
+                </button>
+              </div>
+            )}
             {source && (
               <span
                 className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
@@ -575,7 +610,57 @@ export function EventSourcerApp() {
 
           {!output && !running && <IdleState />}
 
-          {(running || output) && (
+          {running && !output && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
+              className="mt-4 px-6 py-5"
+              style={{
+                background: "var(--ink-raised)",
+                border: "1px solid var(--fg-16)",
+                borderRadius: 2,
+              }}
+            >
+              <LoadingState />
+            </motion.div>
+          )}
+
+          {running && output && (
+            <StreamingState
+              eventsSoFar={streamStatus.eventsSoFar}
+              activeHeading={streamStatus.activeHeading}
+            />
+          )}
+
+          {output && viewMode === "cards" && parsed.events.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
+              className="mt-4 flex flex-col gap-px overflow-hidden"
+              style={{
+                background: "var(--fg-16)",
+                border: "1px solid var(--fg-16)",
+                borderRadius: 2,
+                maxHeight: "calc(100vh - 220px)",
+                overflowY: "auto",
+              }}
+              ref={outputRef}
+            >
+              {parsed.events.map((ev) => (
+                <EventCard key={ev.num} event={ev} />
+              ))}
+              {(parsed.sessionSummary || parsed.verificationNotes) && (
+                <SummaryCard
+                  sessionSummary={parsed.sessionSummary}
+                  verificationNotes={parsed.verificationNotes}
+                />
+              )}
+            </motion.div>
+          )}
+
+          {output && (viewMode === "markdown" || parsed.events.length === 0) && !running && (
             <motion.div
               ref={outputRef}
               initial={{ opacity: 0, y: 6 }}
@@ -590,11 +675,7 @@ export function EventSourcerApp() {
                 overflowY: "auto",
               }}
             >
-              {running && !output ? (
-                <LoadingState />
-              ) : (
-                <div dangerouslySetInnerHTML={{ __html: html }} />
-              )}
+              <div dangerouslySetInnerHTML={{ __html: html }} />
             </motion.div>
           )}
         </div>
@@ -670,6 +751,224 @@ function IdleState() {
           first, halo candidates flagged at the tail.
         </p>
       </div>
+    </div>
+  );
+}
+
+function StreamingState({
+  eventsSoFar,
+  activeHeading,
+}: {
+  eventsSoFar: number;
+  activeHeading: string | null;
+}) {
+  return (
+    <div
+      className="mt-4 flex items-center gap-3 px-5 py-3"
+      style={{
+        background: "var(--ink-raised)",
+        border: "1px solid var(--fg-16)",
+        borderRadius: 2,
+      }}
+    >
+      <span
+        aria-hidden
+        className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{
+          background: "var(--amber)",
+          animation: "data-pulse 2.4s ease-in-out infinite",
+        }}
+      />
+      <span className="kicker-sm">
+        Streaming · {eventsSoFar} event{eventsSoFar === 1 ? "" : "s"}
+        {activeHeading ? ` · on ${activeHeading}` : ""}
+      </span>
+    </div>
+  );
+}
+
+function EventCard({ event: e }: { event: ParsedEvent }) {
+  const [copied, setCopied] = useState(false);
+  const streamColor =
+    e.stream?.toUpperCase() === "HALO"
+      ? "var(--amber)"
+      : "var(--frost)";
+  const copyEvent = async () => {
+    try {
+      await navigator.clipboard.writeText(e.raw);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    } catch {}
+  };
+  return (
+    <article
+      className="group relative px-6 py-5"
+      style={{
+        background: "var(--ink-raised)",
+        transition: "background 180ms cubic-bezier(0.2, 0.7, 0.2, 1)",
+      }}
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-250 group-hover:opacity-100"
+        style={{ boxShadow: "inset 0 0 0 1px var(--frost-glow)" }}
+      />
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              className="font-mono text-[11px] font-medium uppercase tracking-[0.18em]"
+              style={{ color: "var(--fg-52)" }}
+            >
+              {e.num.padStart(2, "0")}
+            </span>
+            {e.stream && (
+              <span
+                className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+                style={{
+                  padding: "2px 6px",
+                  background: "var(--ink-deep)",
+                  border: `1px solid ${streamColor}`,
+                  color: streamColor,
+                  borderRadius: 2,
+                }}
+              >
+                {e.stream}
+              </span>
+            )}
+          </div>
+          <h3
+            className="serif mt-2 text-[20px] leading-[1.15]"
+            style={{ color: "var(--fg-100)" }}
+          >
+            {e.title}
+          </h3>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {e.link && (
+            <a
+              href={e.link}
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+              style={{
+                padding: "5px 10px",
+                background: "transparent",
+                border: "1px solid var(--frost)",
+                color: "var(--frost)",
+                borderRadius: 2,
+              }}
+            >
+              Open ↗
+            </a>
+          )}
+          <button
+            onClick={copyEvent}
+            className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+            style={{
+              padding: "5px 10px",
+              background: "transparent",
+              border: "1px solid var(--fg-16)",
+              color: "var(--fg-72)",
+              borderRadius: 2,
+            }}
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      </header>
+
+      <dl className="mt-4 grid grid-cols-1 gap-x-5 gap-y-2.5 md:grid-cols-[150px_1fr]">
+        {e.dates && <Row label="Dates" value={e.dates} />}
+        {e.location && <Row label="Location" value={e.location} />}
+        {e.audienceFit && <Row label="Audience fit" value={e.audienceFit} />}
+        {e.themeFit && <Row label="Theme fit" value={e.themeFit} />}
+        {e.speakingRoute && (
+          <Row label="Speaking route" value={e.speakingRoute} />
+        )}
+        {e.sponsorshipRoute && (
+          <Row label="Sponsorship route" value={e.sponsorshipRoute} />
+        )}
+        {e.payToPlay && (
+          <Row
+            label="Pay-to-play"
+            value={e.payToPlay}
+            accent={
+              /partial|yes/i.test(e.payToPlay) ? "var(--amber)" : undefined
+            }
+          />
+        )}
+        {e.whyPartner && <Row label="Why this partner" value={e.whyPartner} />}
+        {e.travelBurden && (
+          <Row label="Travel burden" value={e.travelBurden} />
+        )}
+        {Object.entries(e.extra).map(([k, v]) => (
+          <Row key={k} label={k} value={v} />
+        ))}
+      </dl>
+    </article>
+  );
+}
+
+function Row({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: string;
+}) {
+  return (
+    <>
+      <dt
+        className="font-mono text-[10px] font-medium uppercase tracking-[0.16em]"
+        style={{ color: "var(--fg-52)", paddingTop: 1 }}
+      >
+        {label}
+      </dt>
+      <dd
+        className="m-0 text-[13.5px] leading-[1.55]"
+        style={{ color: accent ?? "var(--fg-100)" }}
+      >
+        {value}
+      </dd>
+    </>
+  );
+}
+
+function SummaryCard({
+  sessionSummary,
+  verificationNotes,
+}: {
+  sessionSummary?: string;
+  verificationNotes?: string;
+}) {
+  return (
+    <div
+      className="px-6 py-5"
+      style={{ background: "var(--ink-deep)" }}
+    >
+      <div className="kicker-sm">Session summary</div>
+      {sessionSummary && (
+        <p
+          className="mt-2 text-[13px] leading-[1.6]"
+          style={{ color: "var(--fg-100)" }}
+        >
+          {sessionSummary}
+        </p>
+      )}
+      {verificationNotes && (
+        <>
+          <div className="kicker-sm mt-5">Verification notes</div>
+          <p
+            className="mt-2 whitespace-pre-wrap text-[12.5px] leading-[1.6]"
+            style={{ color: "var(--fg-72)" }}
+          >
+            {verificationNotes}
+          </p>
+        </>
+      )}
     </div>
   );
 }
