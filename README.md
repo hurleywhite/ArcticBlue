@@ -29,7 +29,8 @@ npm run dev
 
 Required env vars:
 - `ANTHROPIC_API_KEY` — Claude Sonnet 4.6 + Opus 4.7 (required for Practice, Analyzer, Dashboard justifications)
-- `SERPAPI_KEY` — enables Company Analyzer job-listing extraction. Without it, the Analyzer falls back to web-search enrichment only.
+- `APOLLO_API_KEY` — firmographics, detected tech stack, job postings for the Company Analyzer
+- `EXA_API_KEY` — neural search for recent news + fallback job listings for the Analyzer
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` — auth (optional until production rollout)
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` — persistence (optional; UI uses localStorage until wired)
 - `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET` — video module playback (Phase 1B+)
