@@ -218,7 +218,7 @@ function IndexSlide({ isPresenting }: { isPresenting: boolean }) {
     <div>
       <Kicker isPresenting={isPresenting}>Case studies · Index</Kicker>
       <Headline isPresenting={isPresenting}>
-        Where AI transforms the business — and where it creates new products.
+        Transform internal operations. Create external solutions.
       </Headline>
       <p
         className={
@@ -227,9 +227,7 @@ function IndexSlide({ isPresenting }: { isPresenting: boolean }) {
             : "mt-3 max-w-[720px] text-[14px] leading-[1.65] text-ink"
         }
       >
-        Two lenses on the same enablement work. Transform lifts the economics of what
-        you already do; Create opens surface area that wasn't possible before. The six
-        cases that follow show each pattern in play.
+        Six case studies across both lenses.
       </p>
 
       <div

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { marked } from "marked";
 
 /*
@@ -8,6 +8,25 @@ import { marked } from "marked";
   Claude via /api/workbench/prep. The output can be copied, exported
   to a print window (PDF), or pushed into the clipboard as a raw note.
 */
+
+type AccountPayload = {
+  company_name: string;
+  domain: string;
+  industry: string;
+  size: string;
+  stage: string;
+  poc_name: string;
+  poc_title: string;
+  notes: string;
+  target_opportunity_category?: string;
+  relevant_case_slugs?: string[];
+  next_meeting?: {
+    title: string;
+    duration_minutes: number;
+    location: string;
+    attendees: string[];
+  } | null;
+};
 
 export function MeetingPrepClient({
   accountId,
@@ -17,6 +36,8 @@ export function MeetingPrepClient({
   pocName,
   pocTitle,
   pocEmail,
+  accountPayload,
+  onBriefGenerated,
 }: {
   accountId: string;
   accountName: string;
@@ -32,6 +53,8 @@ export function MeetingPrepClient({
   pocName: string;
   pocTitle: string;
   pocEmail: string;
+  accountPayload: AccountPayload;
+  onBriefGenerated?: () => void;
 }) {
   const [brief, setBrief] = useState("");
   const [running, setRunning] = useState(false);
@@ -47,7 +70,7 @@ export function MeetingPrepClient({
       const res = await fetch("/api/workbench/prep", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId }),
+        body: JSON.stringify({ account: accountPayload }),
       });
       if (!res.ok || !res.body) throw new Error(`Request failed: ${res.status}`);
       setModel(res.headers.get("X-Arcticmind-Model"));
@@ -70,6 +93,7 @@ export function MeetingPrepClient({
           } catch {}
         }
       }
+      onBriefGenerated?.();
     } catch (err) {
       setBrief(`_[Error: ${err instanceof Error ? err.message : String(err)}]_`);
     } finally {

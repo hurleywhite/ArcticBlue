@@ -23,10 +23,10 @@ export default function HomePage() {
         <div className="grid grid-cols-1 gap-4 px-8 py-10 md:grid-cols-[1fr_auto] md:items-end">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.12em] opacity-70">
-              ArcticMind · Sales workbench
+              ArcticMind
             </div>
             <h1 className="mt-1 text-[28px] font-bold leading-[1.15]">
-              Prep faster. Demo sharper. Cite from one shelf.
+              Sales workbench for ArcticBlue.
             </h1>
           </div>
           <div className="text-[11px] uppercase tracking-[0.12em] opacity-80">
@@ -54,34 +54,34 @@ export default function HomePage() {
                 Pipeline
               </Link>
               <Link href={`/workbench/accounts/${next.id}`} className="btn-primary">
-                Prep this meeting →
+                Open meeting →
               </Link>
             </div>
           </div>
         </section>
       )}
 
-      <h2 className="section-header mt-10 mb-3">Three surfaces</h2>
+      <h2 className="section-header mt-10 mb-3">Sections</h2>
       <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-3">
         <SurfaceCell
           kicker="Workbench"
-          title="Your daily home"
-          body={`Pipeline of ${ACCOUNTS.length} accounts. Hero Next-Meeting card with a live meeting-prep stream — Claude drafts who they are, what they care about, five discovery questions, case cites, follow-up email.`}
-          stat="Pipeline + prep + drafter"
+          title="Pipeline and meeting prep"
+          body={`${ACCOUNTS.length} accounts in the pipeline. The per-meeting flow drafts a brief: who they are, five discovery questions, cases to cite, and a follow-up email.`}
+          stat={`${ACCOUNTS.length} accounts`}
           href="/workbench"
         />
         <SurfaceCell
           kicker="Showcase"
-          title="What you show in the meeting"
-          body="Six demo surfaces: Mirror, Canvas, Analyzer, Practice, Case walks, the Lab explainer. Every one has Present Mode — full-bleed, keyboard-navigable, no app chrome."
-          stat="Esc to exit · arrows to advance"
+          title="Demos for screen share"
+          body="Six demos: Mirror, Canvas, Analyzer, Practice, case-study deck, Lab explainer. Each has a present mode that hides the app chrome."
+          stat="6 demos"
           href="/showcase"
         />
         <SurfaceCell
           kicker="Library"
-          title="Everything you cite"
-          body={`${PROMPTS.length} prompts · ${TEMPLATES.length} templates · ${USE_CASES.length} cases · ${RESOURCES.length} resources · ${MODULES.length} modules. Live filter, Cite-this copies formatted references ready for a proposal.`}
-          stat="One shelf, live-filtered"
+          title="Reference material"
+          body={`${PROMPTS.length} prompts, ${TEMPLATES.length} templates, ${USE_CASES.length} cases, ${RESOURCES.length} resources, ${MODULES.length} modules. Filter by kind or topic. Cite copies a reference to the clipboard.`}
+          stat={`${PROMPTS.length + TEMPLATES.length + USE_CASES.length + RESOURCES.length + MODULES.length} items`}
           href="/library"
           last
         />
@@ -89,10 +89,10 @@ export default function HomePage() {
 
       <h2 className="section-header mt-10 mb-3">Shortcuts</h2>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <ShortcutTile href="/mirror" title="Mirror" sub="The opportunity field" />
-        <ShortcutTile href="/showcase/analyzer" title="Analyzer" sub="Live company profile" />
-        <ShortcutTile href="/showcase/cases" title="Case walks" sub="3-min proof points" />
-        <ShortcutTile href="/showcase/lab" title="The Lab" sub="What they buy" />
+        <ShortcutTile href="/mirror" title="Mirror" sub="Opportunity field" />
+        <ShortcutTile href="/showcase/analyzer" title="Analyzer" sub="Company profile" />
+        <ShortcutTile href="/showcase/cases" title="Case studies" sub="Click-through deck" />
+        <ShortcutTile href="/showcase/lab" title="Practical Labs" sub="Product explainer" />
       </div>
     </div>
   );

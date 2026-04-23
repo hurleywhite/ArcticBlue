@@ -24,59 +24,59 @@ type ShowcaseItem = {
 const ITEMS: ShowcaseItem[] = [
   {
     kicker: "01 · Mirror",
-    title: "The opportunity field, visualized",
+    title: "Opportunity field for a company",
     body:
-      "Type the prospect's domain. The orbital map places eight opportunities around their company: sized by impact, positioned by readiness, colored by category. Star three, export a branded brief.",
+      "Enter a domain. Eight opportunities plotted around the company — sized by impact, positioned by readiness. Star three, export a brief.",
     openHref: "/mirror",
     presentHref: "/mirror",
-    stat: "Curated archetypes · 5 demo companies",
+    stat: "5 demo companies",
     accent: "navy",
   },
   {
     kicker: "02 · Canvas",
-    title: "Role × industry opportunity map",
+    title: "Opportunity map by role and industry",
     body:
-      "In a discovery call, ask the buyer to pick their role and industry. The Canvas streams eight specific opportunities across three strategic lenses. Star what matters, build a shortlist on the screen.",
+      "Pick a role and an industry. Eight opportunities across three lenses. Star and build a shortlist.",
     openHref: "/showcase/canvas",
     presentHref: "/showcase/canvas?present=1",
     stat: "10 roles × 10 industries",
   },
   {
     kicker: "03 · Analyzer",
-    title: "Their company, their profile — live",
+    title: "Company profile, live",
     body:
-      "Apollo firmographics, detected tech stack, Exa-sourced recent signals, Claude-synthesized AI adoption read, and three actionable insights. Run it live with the prospect watching.",
+      "Enter a domain. Firmographics, detected tech stack, recent signals, AI-adoption notes, and actionable insights.",
     openHref: "/showcase/analyzer",
     presentHref: "/showcase/analyzer?present=1",
     stat: "Apollo + Exa + Claude",
   },
   {
     kicker: "04 · Practice",
-    title: "Claude, working on their actual task",
+    title: "Seeded chat with Claude",
     body:
-      "Seed the sandbox with a task they mentioned on the call. Streaming response from Claude Sonnet 4.6, rendered in clean markdown. Exportable as an artifact they can keep.",
+      "Start a session from a Canvas opportunity, a module exercise, or a prompt. Streamed response, markdown export.",
     openHref: "/showcase/practice",
     presentHref: "/showcase/practice?present=1",
     stat: "Claude Sonnet 4.6",
   },
   {
-    kicker: "05 · Case walks",
-    title: "Three minutes, one proof point",
+    kicker: "05 · Case studies",
+    title: "Click-through deck",
     body:
-      "Seven anonymized engagements, each with a story, a one-pager PDF, a slide deck. The case walk cycles through challenge → approach → outcome with the headline metric as the close.",
+      "Six case studies. Each reveals business challenge, solution, and impact in sequence. Sidebar jump or arrow keys.",
     openHref: "/showcase/cases",
     presentHref: "/showcase/cases?present=1",
-    stat: `${USE_CASES.length} cases`,
+    stat: "6 cases",
     accent: "ice",
   },
   {
-    kicker: "06 · The Lab",
-    title: "What they'd actually buy, in four panels",
+    kicker: "06 · Practical Labs",
+    title: "Product explainer",
     body:
-      "The one-pager pitch, animated. Monthly session, real work, facilitated by people who do this for a living, compounded over time. End with what's included and how to start.",
+      "Six-beat walkthrough of what clients buy: problem, the Lab, how it works, walkaway, what's included, close.",
     openHref: "/showcase/lab",
     presentHref: "/showcase/lab?present=1",
-    stat: "AI Practical Labs",
+    stat: "From the one-pager",
     accent: "ice",
   },
 ];
@@ -86,14 +86,13 @@ export default function ShowcasePage() {
     <div className="mx-auto max-w-[1200px] px-6 py-8">
       <PageHeader
         kicker="Showcase"
-        title="Open any tile on a screen share. Exit with Esc."
+        title="Demos for screen share."
       />
 
       <div className="callout mt-6">
         <p>
-          Every surface has a present mode — full-bleed, no nav, keyboard-navigable —
-          so the client sees the product, not the app. Use the open links to demo
-          interactively from a meeting.
+          Each demo has a present mode — full-bleed, keyboard-navigable, no app chrome.
+          Esc exits.
         </p>
       </div>
 

@@ -1,34 +1,54 @@
 import { NextRequest } from "next/server";
 import { MODELS, anthropic } from "@/lib/anthropic";
-import { getAccountById } from "@/lib/content/accounts";
 import { USE_CASES } from "@/lib/content/use-cases";
 
 /*
   Workbench meeting-prep streamer.
 
-  POST { accountId }
-  Streams a structured markdown brief for the upcoming meeting:
+  POST { account } where account matches the client's resolved account
+  shape (including localStorage overlays). The server doesn't store
+  accounts — the source of truth is the client. Passing the payload
+  means custom accounts and edited notes work end-to-end.
+
+  Streams a structured markdown brief:
   - Who they are (industry + size + our read)
-  - What they care about (derived from notes + relevant case studies)
+  - What they care about (derived from notes)
   - Five discovery questions scoped to their stage
   - Three cases to cite with a one-line "why for them"
   - Follow-up email scaffold
-  - Red flags / watch-outs
+  - Watch-outs
 
-  Mock fallback when ANTHROPIC_API_KEY is missing so the UI stays
-  demo-able without a key.
+  Mock fallback when ANTHROPIC_API_KEY is missing.
 */
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
 
+type IncomingAccount = {
+  company_name: string;
+  domain: string;
+  industry: string;
+  size: string;
+  stage: string;
+  poc_name: string;
+  poc_title: string;
+  notes: string;
+  target_opportunity_category?: string;
+  relevant_case_slugs?: string[];
+  next_meeting?: {
+    title: string;
+    duration_minutes: number;
+    location: string;
+    attendees: string[];
+  } | null;
+};
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
-  const accountId = body?.accountId as string | undefined;
-  if (!accountId) return new Response("accountId is required", { status: 400 });
-
-  const account = getAccountById(accountId);
-  if (!account) return new Response("account not found", { status: 404 });
+  const account = body?.account as IncomingAccount | undefined;
+  if (!account || !account.company_name) {
+    return new Response("account payload is required", { status: 400 });
+  }
 
   const hasKey = !!process.env.ANTHROPIC_API_KEY || !!process.env.CLAUDE_API_KEY;
   if (!hasKey) return mockStream(account.company_name);
@@ -55,7 +75,7 @@ One paragraph: what we know about the company and why they're in our pipeline.
 Three bullets. Ground each in a specific thing the notes say.
 
 ## Five discovery questions
-Five numbered questions. Ordered. Stage-appropriate (if they're in discovery, discovery-stage; if proposal, objection-probing). No leading questions.
+Five numbered questions. Ordered. Stage-appropriate. No leading questions.
 
 ## Cases to cite
 For each of up to three relevant ArcticBlue cases, one line on why it matters for this specific company.
@@ -69,19 +89,19 @@ Two or three red flags specific to this meeting — budget, political, technical
 Keep it under 650 words total. Do not invent facts not in the inputs.`;
 
   const userMessage = `Account: ${account.company_name}
-Domain: ${account.domain}
-Industry: ${account.industry}
-Size: ${account.size}
-Stage: ${account.stage}
+Domain: ${account.domain || "(not specified)"}
+Industry: ${account.industry || "(not specified)"}
+Size: ${account.size || "(not specified)"}
+Stage: ${account.stage || "unknown"}
 
-Point of contact: ${account.poc_name} (${account.poc_title})
+Point of contact: ${account.poc_name || "(not named)"}${account.poc_title ? ` (${account.poc_title})` : ""}
 
 ${account.next_meeting ? `Next meeting: "${account.next_meeting.title}" in ${account.next_meeting.duration_minutes} min
 Attendees: ${account.next_meeting.attendees.join(", ")}
 Location: ${account.next_meeting.location}` : "No meeting scheduled."}
 
 Our notes:
-${account.notes}
+${account.notes || "(no notes yet)"}
 
 ${account.target_opportunity_category ? `Target opportunity category: ${account.target_opportunity_category}` : ""}
 
@@ -141,7 +161,7 @@ function mockStream(company: string) {
 
 **[Mock response — no Anthropic API key configured]**
 
-${company} is a pipeline account. When ANTHROPIC_API_KEY is set, this section streams a grounded read of the company based on our internal notes, Apollo firmographics, and Exa-sourced recent signals.
+${company} is a pipeline account. When ANTHROPIC_API_KEY is set, this section streams a grounded read of the company based on our internal notes.
 
 ## What they care about
 
@@ -177,14 +197,14 @@ Thanks for the time today…
 
 ---
 
-*To run live prep: set ANTHROPIC_API_KEY in .env.local and restart.*`;
+*To run live prep: set ANTHROPIC_API_KEY and restart.*`;
 
   const encoder = new TextEncoder();
   const chunks = reply.split(/(\s+)/);
   const readable = new ReadableStream({
     async start(controller) {
-      for (const chunk of chunks) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: chunk })}\n\n`));
+      for (const c of chunks) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: c })}\n\n`));
         await new Promise((r) => setTimeout(r, 10));
       }
       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));

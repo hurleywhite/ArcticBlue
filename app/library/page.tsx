@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { MODULES } from "@/lib/content/modules";
 import { USE_CASES } from "@/lib/content/use-cases";
@@ -96,14 +97,22 @@ export default function LibraryPage() {
     <div className="mx-auto max-w-[1200px] px-6 py-8">
       <PageHeader
         kicker="Library"
-        title="Everything the sales team cites — in one shelf."
+        title="Reference material."
+        right={
+          <Link
+            href="/library/compose"
+            className="btn-secondary inline-block bg-white"
+          >
+            Compose proposal →
+          </Link>
+        }
       />
 
       <div className="callout mt-6">
         <p>
-          Prompts, templates, cases, resources, and learning modules.
-          Filter by kind and topic. Every row has a "Cite this" that copies a
-          formatted reference you can drop into a proposal, Slack, or email.
+          Prompts, templates, cases, resources, and learning modules. Filter by
+          kind or topic. Cite copies a reference to the clipboard. Compose picks
+          3–5 items and drafts a proposal body.
         </p>
       </div>
 
