@@ -262,10 +262,16 @@ export function DashboardHome() {
 
       {/* Between-session tools — Canvas, Analyzer, etc. — demoted to support */}
       <h2 className="section-header mt-10 mb-3">Between-session tools</h2>
-      <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-5">
+        <SupportCell
+          kicker="Mirror"
+          title="A company's opportunity field"
+          body="Domain in → orbital map of 8 AI opportunities, sized by impact, positioned by readiness."
+          href="/mirror"
+        />
         <SupportCell
           kicker="Canvas"
-          title="Map role-specific AI opportunities"
+          title="Role-specific opportunities"
           body={hasCanvas
             ? `${canvasStars.length} starred · ${starState.lastRole} in ${starState.lastIndustry}`
             : "Pick a role and industry to map opportunities you can bring to the next Lab."}
@@ -279,14 +285,14 @@ export function DashboardHome() {
         />
         <SupportCell
           kicker="Practice"
-          title="Try an AI workflow before the session"
-          body="Seeded chat sandbox. Bring the output to the Lab or share as an artifact."
+          title="Try a workflow before the session"
+          body="Seeded chat sandbox. Bring output to the Lab or share as an artifact."
           href="/tools/practice"
         />
         <SupportCell
           kicker="Use Cases"
-          title="See how ArcticBlue clients did it"
-          body="Seven anonymized case studies — story, one-pager PDF, slides."
+          title="How ArcticBlue clients did it"
+          body="Seven anonymized case studies — story, one-pager, slides."
           href="/use-cases"
           last
         />

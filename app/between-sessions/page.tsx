@@ -28,6 +28,13 @@ export default function BetweenSessionsPage() {
       <h2 className="section-header mt-10 mb-3">Tools to bring to your next Lab</h2>
       <div className="border border-ink-border">
         <LinkRow
+          kicker="Mirror"
+          title="See a company's opportunity field"
+          body="Domain in. An orbital map of eight AI opportunities sized by impact and positioned by readiness. Star the ones worth pursuing, export a branded brief. Great for meeting prep."
+          stat="Curated archetypes · 5 demo companies"
+          href="/mirror"
+        />
+        <LinkRow
           kicker="Canvas"
           title="Map AI opportunities for a role and industry"
           body="Pick a role and an industry — ArcticMind plots 8 specific opportunities across 3 strategic lenses. Star the ones you'd like to bring to the Lab as challenge candidates."
