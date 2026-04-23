@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { TopNav } from "@/components/shell/top-nav";
 import { Footer } from "@/components/shell/footer";
 import { NavGate } from "@/components/shell/nav-gate";
 
 export const metadata: Metadata = {
-  title: "ArcticMind · Continuous AI enablement",
+  title: "ArcticMind · Sales workbench",
   description:
-    "ArcticMind is ArcticBlue AI's continuous-enablement platform for enterprise teams — Canvas, Learning, Use Cases, Tools.",
+    "Sales workbench for ArcticBlue — meeting prep, client-facing demos, reference library.",
 };
 
 export default function RootLayout({
@@ -19,13 +20,19 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <div className="flex min-h-screen flex-col">
-          <NavGate>
-            <TopNav />
-          </NavGate>
+          {/* NavGate uses useSearchParams internally; wrap in Suspense so
+              routes that statically prerender don't bail out of SSG. */}
+          <Suspense fallback={<TopNav />}>
+            <NavGate>
+              <TopNav />
+            </NavGate>
+          </Suspense>
           <main className="flex-1">{children}</main>
-          <NavGate>
-            <Footer />
-          </NavGate>
+          <Suspense fallback={<Footer />}>
+            <NavGate>
+              <Footer />
+            </NavGate>
+          </Suspense>
         </div>
       </body>
     </html>
