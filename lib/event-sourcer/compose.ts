@@ -46,40 +46,35 @@ export function composeUserMessage(i: EventSourcerInputs): string {
   }
 
   // Partner focus — fold Industry in if the operator supplied one.
+  const focusBase = (i.partnerFocus ?? "").trim();
   const focus = i.industry?.trim()
-    ? `${i.partnerFocus.trim()} · Industry focus for this run: ${i.industry.trim()}.`
-    : i.partnerFocus.trim();
+    ? `${focusBase} · Industry focus for this run: ${i.industry.trim()}.`
+    : focusBase;
+
+  const tr = (s: string | undefined) => (s ?? "").trim();
 
   lines.push("RUNTIME INPUTS (all that can be supplied; see NOTE at end for integration-gated inputs):");
   lines.push("");
-  lines.push(`1. PARTNER NAME: ${i.partnerName.trim()}`);
+  lines.push(`1. PARTNER NAME: ${tr(i.partnerName)}`);
   lines.push(
     `2. PARTNER EMAIL / CALENDAR IDENTIFIER: N/A — google_calendar integration not wired for this run. Skip STARTUP PROCEDURE step A.`
   );
-  lines.push(
-    `3. PARTNER HOME BASE: ${i.partnerHomeBase.trim() || "Not specified"}`
-  );
+  lines.push(`3. PARTNER HOME BASE: ${tr(i.partnerHomeBase) || "Not specified"}`);
   lines.push(
     `4. PARTNER TRACKER DOC URL: N/A — google_drive integration not wired for this run. Skip STARTUP PROCEDURE step B. Treat the "already tracked" set as empty; no events are excluded on tracker grounds.`
   );
   lines.push(`5. PARTNER FOCUS: ${focus}`);
-  lines.push(`6. AUDIENCE TARGETS: ${i.audienceTargets.trim()}`);
-  lines.push(`7. THEME TARGETS: ${i.themeTargets.trim()}`);
-  lines.push(`8. TIME WINDOW: ${i.windowStart} to ${i.windowEnd}`);
+  lines.push(`6. AUDIENCE TARGETS: ${tr(i.audienceTargets)}`);
+  lines.push(`7. THEME TARGETS: ${tr(i.themeTargets)}`);
+  lines.push(`8. TIME WINDOW: ${tr(i.windowStart)} to ${tr(i.windowEnd)}`);
+  lines.push(`9. REGIONAL SCOPE: ${tr(i.regionalScope) || "Global"}`);
   lines.push(
-    `9. REGIONAL SCOPE: ${(i.regionalScope ?? "Global").trim() || "Global"}`
-  );
-  lines.push(
-    `10. SEED EVENTS: ${
-      i.seedEvents && i.seedEvents.trim() ? i.seedEvents.trim() : "None supplied"
-    }`
+    `10. SEED EVENTS: ${tr(i.seedEvents) || "None supplied"}`
   );
   lines.push(`11. SESSION SIZE: ${sessionSizeLine}`);
   lines.push(
     `12. Q/MONTH SPLIT: ${
-      i.qMonthSplit && i.qMonthSplit.trim()
-        ? i.qMonthSplit.trim()
-        : "default (~2/3 earlier window, ~1/3 later)"
+      tr(i.qMonthSplit) || "default (~2/3 earlier window, ~1/3 later)"
     }`
   );
   lines.push(

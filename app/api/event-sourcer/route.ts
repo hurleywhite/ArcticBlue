@@ -32,6 +32,15 @@ export const maxDuration = 300;
 type Body = { inputs?: EventSourcerInputs };
 
 export async function POST(req: NextRequest) {
+  try {
+    return await handle(req);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return errorStream(`Unhandled server error: ${msg}`);
+  }
+}
+
+async function handle(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as Body | null;
   const inputs = body?.inputs;
   if (!inputs) {
