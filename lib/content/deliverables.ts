@@ -22,7 +22,6 @@ export type IntakeField = {
 };
 
 export type DeliverableType =
-  | "interview-synthesis"
   | "meeting-recap"
   | "pilot-scoping"
   | "discovery-brief"
@@ -45,66 +44,6 @@ export type DeliverableDef = {
 };
 
 export const DELIVERABLES: DeliverableDef[] = [
-  {
-    id: "interview-synthesis",
-    slug: "interview-synthesis",
-    title: "Customer interview synthesis",
-    category: "Research",
-    summary:
-      "Turn raw customer interview notes into a board-ready synthesis — themes, contradictions, decisions, verbatim quotes. The output lands as a branded PDF you can hand to your client.",
-    output_label: "Interview synthesis brief",
-    usage_hint:
-      "Use this after you've run 4–8 customer interviews and need to produce a deliverable for your client.",
-    when_to_use: "After 4–8 customer interviews",
-    produces: "Themes, contradictions, and named decisions",
-    minutes: 8,
-    intake: [
-      {
-        name: "client_name",
-        label: "Client name",
-        help: "Who this synthesis is for. Goes on the cover page.",
-        placeholder: "Glacier Financial",
-        type: "text",
-        required: true,
-      },
-      {
-        name: "decision_to_inform",
-        label: "Decision this synthesis will inform",
-        help: "Name the specific decision. If it's vague, the synthesis will be vague too.",
-        placeholder:
-          "Whether to ship the new advisor-facing AI dashboard to all 14 regional offices this quarter, or pilot in two first.",
-        type: "textarea",
-        rows: 3,
-        required: true,
-      },
-      {
-        name: "audience",
-        label: "Who reads this",
-        help: "The audience shapes tone. Executives want decisions; product teams want themes with examples.",
-        placeholder: "COO + Head of Client Service + Product Lead",
-        type: "text",
-      },
-      {
-        name: "segment_description",
-        label: "Interview segment",
-        help: "Who did we interview? Role, seniority, context.",
-        placeholder:
-          "Senior advisors across 6 regional offices; 10+ years tenure; a mix of early adopters and holdouts",
-        type: "textarea",
-        rows: 2,
-      },
-      {
-        name: "interview_notes",
-        label: "Interview notes",
-        help: "Paste raw notes or transcripts. Separate each interview with a line of three dashes: ---",
-        placeholder:
-          "Interview 1 — Maya, Senior Advisor, Pacific region:\n- Currently spends 40% of prep time searching for client history…\n- Feels the new tool is too fast to trust; wants a review step…\n\n---\n\nInterview 2 — Devon, Senior Advisor, Northeast:\n…",
-        type: "textarea",
-        rows: 12,
-        required: true,
-      },
-    ],
-  },
   {
     id: "meeting-recap",
     slug: "meeting-recap",

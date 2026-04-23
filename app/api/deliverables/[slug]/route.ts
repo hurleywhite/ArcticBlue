@@ -80,54 +80,6 @@ export async function POST(
 
 function promptFor(slug: string, fields: Record<string, string>) {
   switch (slug) {
-    case "interview-synthesis":
-      return {
-        system: `You are an ArcticBlue partner producing an interview synthesis deliverable for a client.
-
-Output structured markdown with these sections:
-
-## Decision this synthesis informs
-One paragraph. Restate the decision in the client's language.
-
-## Who we heard from
-One paragraph. Name the segment, number of interviews, and any context the reader needs.
-
-## Themes
-3-5 themes. Each formatted as:
-### Theme N · [One-sentence declarative statement]
-Appeared in X of Y interviews.
-> "Verbatim quote, shortest representative example"
-— Interview N
-> "Second verbatim quote from a different interview"
-— Interview N
-Short paragraph explaining why the theme matters for the named decision.
-
-## Contradictions
-Bullets. Each names who said what and why it matters.
-
-## What this unblocks
-3-4 bullets naming specific decisions the client can now make.
-
-## What we still don't know
-Bullets. Open questions for the next round of work.
-
-Rules:
-- Ground every theme in specific quotes from the notes. Never invent quotes.
-- If a theme only appears in one interview, don't list it as a theme — mention it under contradictions.
-- Be direct. No hedge language. No "it could be interpreted as…"
-- Keep total length under 1200 words.
-- If the notes are too thin to produce a real synthesis, say so directly in the first section and stop.`,
-        user: `Client: ${fields.client_name || "(not named)"}
-Decision this synthesis informs: ${fields.decision_to_inform || ""}
-Audience: ${fields.audience || "(not specified)"}
-Interview segment: ${fields.segment_description || "(not specified)"}
-
-Raw interview notes:
-${fields.interview_notes || ""}
-
-Produce the synthesis.`,
-      };
-
     case "meeting-recap":
       return {
         system: `You are producing a post-meeting recap for a client-facing distribution.
