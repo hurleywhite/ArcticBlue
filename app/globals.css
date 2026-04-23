@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  ArcticMind — editorial base layer.
+  Reference: docs/design-system.md
+  The whole aesthetic comes from discipline in three places: typography,
+  layout grammar (tables, not cards), and restraint (no gradients, shadows,
+  or decorative affordances).
+*/
+
+:root {
+  --navy: #1F3A5F;
+  --navy-hover: #2A4A7A;
+  --ice: #D5E8F0;
+  --bg-page: #FFFFFF;
+  --bg-card: #F3F6F9;
+  --ink: #1A1A1A;
+  --ink-muted: #555555;
+  --ink-border: #CCCCCC;
+}
+
+html, body {
+  background: var(--bg-page);
+  color: var(--ink);
+  font-family: Arial, Helvetica, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--navy);
+  color: #FFFFFF;
+}
+
+/* Section headers: small caps, navy, wide tracking */
+.section-header {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--navy);
+  font-size: 11px;
+}
+
+/* Document-style tables — the layout grammar of the whole product */
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--ink-border);
+}
+.doc-table th,
+.doc-table td {
+  border: 1px solid var(--ink-border);
+  padding: 10px 18px;
+  text-align: left;
+  vertical-align: top;
+}
+.doc-table thead th {
+  background: var(--navy);
+  color: #FFFFFF;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+/* Callout block — ice blue, one of the few expressive moves */
+.callout {
+  background: var(--ice);
+  border-left: 3px solid var(--navy);
+  padding: 14px 18px;
+}
+
+/* Card surface — light gray-blue, no shadow, no rounding */
+.card-surface {
+  background: var(--bg-card);
+  border: 1px solid var(--ink-border);
+  padding: 14px 18px;
+}
+
+/* Primary button: navy fill, white type, no border radius above 2px */
+.btn-primary {
+  background: var(--navy);
+  color: #FFFFFF;
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--navy);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.btn-primary:hover {
+  background: var(--navy-hover);
+}
+.btn-primary:disabled {
+  background: var(--ink-border);
+  border-color: var(--ink-border);
+  color: var(--ink-muted);
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--navy);
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--navy);
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: var(--bg-card);
+}
+
+/* Numeral box — the "01 / 02 / 03" markers on how-it-works sequences */
+.numeral-box {
+  background: var(--navy);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 14px;
+  display: inline-block;
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Hairline dividers */
+.rule {
+  height: 1px;
+  background: var(--ink-border);
+  border: 0;
+}
+
+/* Inputs — unadorned, thin border, no rounded corners */
+.input,
+.select,
+.textarea {
+  background: #FFFFFF;
+  border: 1px solid var(--ink-border);
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  width: 100%;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--navy);
+}
+
+/* Subtle rise animation reserved for Canvas screens — kept because the
+   prototype's motion is part of the product's feel, just toned down */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: riseIn 400ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
