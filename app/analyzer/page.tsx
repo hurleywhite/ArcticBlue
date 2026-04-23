@@ -5,12 +5,15 @@ export const metadata = { title: "Company Analyzer · ArcticMind" };
 
 export default function AnalyzerPage() {
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-8">
+    <div className="shell pb-32">
       <PageHeader
-        kicker="Company Analyzer"
-        title="Infer a company's tech stack, products, and AI posture from public signals."
+        kicker="Analyzer"
+        title="A company's tech stack and AI posture, inferred from public signals."
+        description="Apollo firmographics + Exa-sourced recent content + Claude synthesis. Domain in, full profile out."
       />
-      <AnalyzerApp />
+      <div className="mt-12">
+        <AnalyzerApp />
+      </div>
     </div>
   );
 }

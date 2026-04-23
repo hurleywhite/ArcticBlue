@@ -13,13 +13,14 @@ export default function AdminPage() {
   const canvasTemplateCount = Object.keys(DEMO_DATA).length;
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-8">
+    <div className="shell pb-32">
       <PageHeader
         kicker="Admin CMS"
-        title="Curate every surface. Same design language, no developer needed."
+        title="Curate every surface."
+        description="List views + inline editors for every content type. Same design language as the learner product, no separate admin dashboard aesthetic."
       />
 
-      <div className="callout mt-6">
+      <div className="callout mt-12">
         <p>
           The CMS is where ArcticBlue facilitators maintain all content. Every content
           type has a list view and an editor. Writes persist to Supabase once DB

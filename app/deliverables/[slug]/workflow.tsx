@@ -126,41 +126,78 @@ export function DeliverableWorkflow({ def }: { def: DeliverableDef }) {
 }
 
 function StepIndicator({ step }: { step: Step }) {
-  const steps: Array<{ id: Step; label: string; n: string }> = [
-    { id: "intake", label: "Intake", n: "01" },
-    { id: "draft", label: "Draft", n: "02" },
-    { id: "export", label: "Export", n: "03" },
+  const steps: Array<{ id: Step; label: string; n: string; note: string }> = [
+    { id: "intake", label: "Intake", n: "01", note: "Structured form" },
+    { id: "draft", label: "Draft", n: "02", note: "Streamed from Claude" },
+    { id: "export", label: "Export", n: "03", note: "Branded PDF · referral" },
   ];
   const activeIdx = steps.findIndex((s) => s.id === step);
   return (
-    <div className="mt-6 flex items-stretch border border-ink-border">
+    <div
+      className="mt-8 grid overflow-hidden md:grid-cols-3"
+      style={{
+        background: "var(--fg-16)",
+        gap: "1px",
+      }}
+    >
       {steps.map((s, i) => {
         const isActive = i === activeIdx;
         const isPast = i < activeIdx;
         return (
           <div
             key={s.id}
-            className={`flex-1 border-r border-ink-border px-4 py-3 last:border-r-0 ${
-              isActive ? "bg-navy text-white" : isPast ? "bg-ice" : "bg-white"
-            }`}
+            className="relative px-5 py-4 transition-all duration-250"
+            style={{
+              background: isActive
+                ? "var(--ink-raised)"
+                : isPast
+                  ? "var(--ink-deep)"
+                  : "var(--ink)",
+              transitionTimingFunction: "cubic-bezier(0.2, 0.7, 0.2, 1)",
+            }}
           >
+            {isActive && (
+              <span
+                className="absolute left-0 top-0 h-0.5 w-full"
+                style={{ background: "var(--frost)" }}
+              />
+            )}
             <div
-              className={`text-[10px] font-bold uppercase tracking-[0.12em] ${
-                isActive ? "opacity-80" : isPast ? "text-navy" : "text-ink-muted"
-              }`}
+              className="kicker flex items-center gap-2"
+              style={{
+                color: isActive
+                  ? "var(--frost)"
+                  : isPast
+                    ? "var(--fg-52)"
+                    : "var(--fg-32)",
+              }}
             >
-              {s.n} · {s.label}
+              <span>{s.n}</span>
+              <span style={{ color: "var(--fg-32)" }}>·</span>
+              <span>{s.label}</span>
+              {isActive && (
+                <span
+                  className="ml-auto data-dot"
+                  style={{ background: "var(--frost)" }}
+                />
+              )}
+              {isPast && (
+                <span className="ml-auto" style={{ color: "var(--sage)" }}>
+                  ✓
+                </span>
+              )}
             </div>
             <div
-              className={`mt-1 text-[12px] ${
-                isActive ? "opacity-90" : isPast ? "text-ink" : "text-ink-muted"
-              }`}
+              className="mt-2 text-[13px]"
+              style={{
+                color: isActive
+                  ? "var(--fg-100)"
+                  : isPast
+                    ? "var(--fg-72)"
+                    : "var(--fg-32)",
+              }}
             >
-              {s.id === "intake"
-                ? "Structured form"
-                : s.id === "draft"
-                  ? "Streamed from Claude, editable"
-                  : "Branded PDF + referral"}
+              {s.note}
             </div>
           </div>
         );

@@ -14,17 +14,19 @@ export default async function AccountPage({
 }) {
   const { id } = await params;
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-8">
+    <div className="shell pb-32">
       <PageHeader
         kicker="Workbench"
         title="Account"
         right={
-          <Link href="/workbench" className="btn-secondary inline-block bg-white">
+          <Link href="/workbench" className="btn-secondary">
             ← Pipeline
           </Link>
         }
       />
-      <AccountClient accountId={id} />
+      <div className="mt-12">
+        <AccountClient accountId={id} />
+      </div>
     </div>
   );
 }
