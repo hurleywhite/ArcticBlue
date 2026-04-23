@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
+import { PROMPTS } from "@/lib/content/prompts";
+import { TEMPLATES } from "@/lib/content/templates";
 
 export const metadata = { title: "Tools · ArcticMind" };
 
@@ -14,8 +16,8 @@ export default function ToolsPage() {
       <div className="callout mt-6">
         <p>
           Tools is a focused practice environment — not a general-purpose AI playground.
-          Every session is seeded with context from the Canvas, a module exercise, or a
-          curated prompt.
+          Every practice session is seeded with context from the Canvas, a module exercise,
+          or a curated prompt.
         </p>
       </div>
 
@@ -24,23 +26,23 @@ export default function ToolsPage() {
         <ToolRow
           n="01"
           title="Practice — a seeded chat sandbox"
-          body="Start a session from a Canvas opportunity, a module exercise, a prompt from the library, or blank. Claude Sonnet 4.6 responds with streaming. Sessions persist; export as markdown."
+          body="Start a session from a Canvas opportunity, a module exercise, a prompt from the library, or blank. Sessions persist; export as markdown."
           href="/tools/practice"
-          status="Phase 1D"
+          cta="Open Practice →"
         />
         <ToolRow
           n="02"
-          title="Prompt Library"
-          body="12 curated prompts spanning competitor analysis, interview synthesis, product briefs, meeting notes, strategy memos, SWOT-style analysis, and more."
+          title={`Prompt Library · ${PROMPTS.length} curated prompts`}
+          body="Prompts spanning competitor analysis, interview synthesis, product briefs, meeting notes, strategy memos, data exploration, slide outlines, RFP analysis, and more."
           href="/tools/prompts"
-          status="Phase 1D"
+          cta="Browse prompts →"
         />
         <ToolRow
           n="03"
-          title="Templates"
-          body="6 structured templates — email, brief, analysis, plan formats. Fill variables, copy to clipboard, export to branded PDF, or pipe into Practice."
+          title={`Templates · ${TEMPLATES.length} structured formats`}
+          body="The output scaffolding for common AI-assisted deliverables — email, brief, analysis, plan. Fill variables, copy, export to PDF, or pipe into Practice."
           href="/tools/templates"
-          status="Phase 1D"
+          cta="Browse templates →"
           last
         />
       </div>
@@ -53,19 +55,19 @@ function ToolRow({
   title,
   body,
   href,
-  status,
+  cta,
   last,
 }: {
   n: string;
   title: string;
   body: string;
   href: string;
-  status: string;
+  cta: string;
   last?: boolean;
 }) {
   return (
     <div
-      className={`grid grid-cols-[72px_1fr_120px] items-start ${
+      className={`grid grid-cols-[72px_1fr_160px] items-start ${
         last ? "" : "border-b border-ink-border"
       }`}
     >
@@ -76,8 +78,13 @@ function ToolRow({
         <div className="text-[14px] font-bold text-navy">{title}</div>
         <p className="mt-1 text-[13px] leading-[1.55] text-ink">{body}</p>
       </Link>
-      <div className="px-4 py-4 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-muted">
-        {status}
+      <div className="flex items-center justify-end px-4 py-4">
+        <Link
+          href={href}
+          className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy hover:underline"
+        >
+          {cta}
+        </Link>
       </div>
     </div>
   );

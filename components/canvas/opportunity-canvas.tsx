@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   AXIS_CONFIGS,
   INDUSTRIES,
@@ -8,6 +9,7 @@ import {
   routeDemo,
   type Opportunity,
 } from "@/lib/canvas/demo-data";
+import { sessionKey, useStarState } from "@/lib/state/stars";
 import { CardModal } from "./card-modal";
 import { RoadmapModal } from "./roadmap-modal";
 
@@ -33,8 +35,31 @@ export function OpportunityCanvas() {
   const [starred, setStarred] = useState<Set<string>>(new Set());
   const [showRoadmap, setShowRoadmap] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("Mapping the opportunity landscape");
+  const [starState, setStarState] = useStarState();
 
   const axis = AXIS_CONFIGS[axisIdx];
+
+  // Re-hydrate stars when role/industry changes and we're on the canvas
+  useEffect(() => {
+    if (screen !== "canvas") return;
+    const key = sessionKey(role, industry);
+    const existing = starState.stars[key] ?? [];
+    setStarred(new Set(existing));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, role, industry]);
+
+  // Persist stars + last-open whenever the star set changes on the canvas
+  useEffect(() => {
+    if (screen !== "canvas") return;
+    const key = sessionKey(role, industry);
+    setStarState((prev) => ({
+      stars: { ...prev.stars, [key]: Array.from(starred) },
+      lastRole: role,
+      lastIndustry: industry,
+      lastOpenedAt: new Date().toISOString(),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starred, screen]);
 
   const handleGenerate = () => {
     setScreen("loading");
@@ -323,17 +348,27 @@ export function OpportunityCanvas() {
             </div>
           </div>
 
-          <div className="mt-8 flex items-center justify-between border-t border-ink-border pt-5">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-ink-border pt-5">
             <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink">
               {starred.size} starred
             </div>
-            <button
-              className="btn-primary disabled:cursor-not-allowed"
-              onClick={() => setShowRoadmap(true)}
-              disabled={starred.size === 0}
-            >
-              Build roadmap →
-            </button>
+            <div className="flex items-center gap-2">
+              {starred.size >= 3 && (
+                <Link
+                  href="/canvas/next"
+                  className="btn-secondary"
+                >
+                  See what's next →
+                </Link>
+              )}
+              <button
+                className="btn-primary disabled:cursor-not-allowed"
+                onClick={() => setShowRoadmap(true)}
+                disabled={starred.size === 0}
+              >
+                Build roadmap →
+              </button>
+            </div>
           </div>
         </section>
       )}

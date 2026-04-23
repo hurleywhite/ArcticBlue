@@ -156,6 +156,77 @@ html, body {
   border-color: var(--navy);
 }
 
+/* Editorial prose — applied to markdown-rendered module bodies and
+   use-case sections. No serif, no italics-for-everything, Arial
+   throughout, tight rhythm. */
+.prose-editorial h1,
+.prose-editorial h2,
+.prose-editorial h3,
+.prose-editorial h4 {
+  color: var(--navy);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.prose-editorial h1 { font-size: 22px; margin: 28px 0 12px; }
+.prose-editorial h2 { font-size: 17px; margin: 22px 0 10px; }
+.prose-editorial h3 { font-size: 14px; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+.prose-editorial h4 { font-size: 13px; margin: 14px 0 6px; }
+.prose-editorial p  { margin: 0 0 12px; line-height: 1.6; }
+.prose-editorial ul,
+.prose-editorial ol { margin: 0 0 14px 20px; padding: 0; }
+.prose-editorial li { margin: 4px 0; line-height: 1.55; }
+.prose-editorial strong { color: var(--navy); font-weight: 700; }
+.prose-editorial blockquote {
+  background: var(--ice);
+  border-left: 3px solid var(--navy);
+  padding: 10px 16px;
+  margin: 12px 0;
+  font-style: normal;
+}
+.prose-editorial blockquote p { margin: 6px 0; }
+.prose-editorial code {
+  background: var(--bg-card);
+  border: 1px solid var(--ink-border);
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 12px;
+}
+.prose-editorial pre {
+  background: var(--bg-card);
+  border: 1px solid var(--ink-border);
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 10px 0;
+}
+.prose-editorial pre code { background: transparent; border: 0; padding: 0; }
+.prose-editorial table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--ink-border);
+  margin: 14px 0;
+  font-size: 12px;
+}
+.prose-editorial th,
+.prose-editorial td {
+  border: 1px solid var(--ink-border);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-editorial thead th {
+  background: var(--navy);
+  color: #FFFFFF;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.prose-editorial hr { border: 0; border-top: 1px solid var(--ink-border); margin: 18px 0; }
+.prose-editorial a { color: var(--navy); text-decoration: underline; }
+.prose-editorial a:hover { color: var(--navy-hover); }
+
 /* Subtle rise animation reserved for Canvas screens — kept because the
    prototype's motion is part of the product's feel, just toned down */
 @keyframes riseIn {
