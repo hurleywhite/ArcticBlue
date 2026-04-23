@@ -1,9 +1,35 @@
 /*
   Parse the streamed markdown output from the Event Sourcer into
-  structured records. Tolerant: if the model drops a field, we leave
-  it undefined rather than throwing. Unknown labels surface in
-  `extra` so nothing is silently dropped.
+  structured records. Matches the EVENT FORMAT defined in Hurley's
+  system prompt:
+
+    ### [N]. [Event Name]
+    **Link**: ...
+    **Dates**: ...
+    **Location**: ...
+    **Type**: Enterprise / Halo / Seed
+    **Why it fits**: ...
+    **About**: ...
+    **Focus areas**:
+    - bullet
+    - bullet
+    **Typical attendees**: ...
+    **Speaking route**:
+    - CFP/speaker page: ...
+    - Contact: ...
+    - Deadline: ...
+    **Pay-to-play for speaking**: Yes / No / Unknown
+    **Travel burden from PARTNER HOME BASE**: Local / Regional / Long-haul
+    **Priority**: High / Medium / Low
+
+  Fields that hold a bulleted sub-block (Focus areas, Speaking route)
+  are captured as the raw multi-line string so the renderer can lay
+  them out faithfully without losing anything.
 */
+
+export type EventType = "Enterprise" | "Halo" | "Seed" | string;
+export type Priority = "High" | "Medium" | "Low" | string;
+export type Travel = "Local" | "Regional" | "Long-haul" | string;
 
 export type ParsedEvent = {
   num: string;
@@ -11,14 +37,15 @@ export type ParsedEvent = {
   link?: string;
   dates?: string;
   location?: string;
-  stream?: "PRIMARY" | "HALO" | string;
-  audienceFit?: string;
-  themeFit?: string;
-  speakingRoute?: string;
-  sponsorshipRoute?: string;
+  type?: EventType;
+  whyItFits?: string;
+  about?: string;
+  focusAreas?: string; // multi-line raw (bullets)
+  typicalAttendees?: string;
+  speakingRoute?: string; // multi-line raw (bullets)
   payToPlay?: string;
-  whyPartner?: string;
-  travelBurden?: string;
+  travelBurden?: Travel;
+  priority?: Priority;
   extra: Record<string, string>;
   raw: string;
 };
@@ -27,22 +54,28 @@ export type ParsedOutput = {
   events: ParsedEvent[];
   sessionSummary?: string;
   verificationNotes?: string;
+  calendarContext?: string;
+  seedStatus?: string;
   trailing: string;
 };
 
+// Map the bold labels in the prompt → our ParsedEvent keys.
+// Whatever isn't in this map lands in `extra`.
 const LABEL_MAP: Record<string, keyof ParsedEvent> = {
   link: "link",
   dates: "dates",
   location: "location",
-  stream: "stream",
-  "audience fit": "audienceFit",
-  "theme fit": "themeFit",
+  type: "type",
+  "why it fits": "whyItFits",
+  about: "about",
+  "focus areas": "focusAreas",
+  "typical attendees": "typicalAttendees",
   "speaking route": "speakingRoute",
-  "sponsorship route": "sponsorshipRoute",
-  "pay-to-play flag": "payToPlay",
-  "pay to play flag": "payToPlay",
-  "why this partner": "whyPartner",
+  "pay-to-play for speaking": "payToPlay",
+  "pay to play for speaking": "payToPlay",
+  "travel burden from partner home base": "travelBurden",
   "travel burden": "travelBurden",
+  priority: "priority",
 };
 
 const HEADING_RE = /^###\s+(\d+)\.\s*(.+?)\s*$/m;
@@ -52,9 +85,6 @@ export function parseEventOutput(md: string): ParsedOutput {
     return { events: [], trailing: "" };
   }
 
-  // Split on a horizontal rule — each event block ends with ---.
-  // The trailing section (Session summary / Verification notes) does
-  // NOT live inside an event card and may or may not have its own rule.
   const blocks = md.split(/\n-{3,}\n/).map((b) => b.trim());
   const events: ParsedEvent[] = [];
   const trailingChunks: string[] = [];
@@ -69,13 +99,15 @@ export function parseEventOutput(md: string): ParsedOutput {
   }
 
   const trailing = trailingChunks.join("\n\n").trim();
-  const sessionSummary = extractTrailingField(trailing, "Session summary");
-  const verificationNotes = extractTrailingField(
-    trailing,
-    "Verification notes"
-  );
 
-  return { events, sessionSummary, verificationNotes, trailing };
+  return {
+    events,
+    sessionSummary: extractTrailingField(trailing, "Session summary"),
+    verificationNotes: extractTrailingField(trailing, "Verification notes"),
+    calendarContext: extractTrailingField(trailing, "Calendar Context"),
+    seedStatus: extractTrailingField(trailing, "Seed Event Status"),
+    trailing,
+  };
 }
 
 function parseEventBlock(
@@ -90,16 +122,13 @@ function parseEventBlock(
     raw: block,
   };
 
-  // Split into lines, then find `**Label**: value` or `**Label:** value`
-  // patterns. Multi-line values (rare) are joined in until the next
-  // bold-label line.
   const lines = block.split("\n").slice(1); // drop the heading
   let currentKey: keyof ParsedEvent | null = null;
   let currentExtraKey: string | null = null;
   let currentValue: string[] = [];
 
   const flush = () => {
-    const v = currentValue.join(" ").trim();
+    const v = currentValue.join("\n").trim();
     if (!v) {
       currentKey = null;
       currentExtraKey = null;
@@ -118,9 +147,11 @@ function parseEventBlock(
   };
 
   for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) continue;
-    const m = line.match(/^\*\*([^:*]+?)\*\*\s*:\s*(.*)$/);
+    const line = rawLine.trimEnd();
+    // New field starts when we see **Label**:  — may or may not have
+    // inline value. Sub-bullets on following lines belong to whatever
+    // the prior label was.
+    const m = line.match(/^\s*\*\*([^:*]+?)\*\*\s*:\s*(.*)$/);
     if (m) {
       flush();
       const label = m[1].trim().toLowerCase();
@@ -132,14 +163,13 @@ function parseEventBlock(
         currentExtraKey = m[1].trim();
       }
       currentValue = value ? [value] : [];
-    } else {
+    } else if (line.trim()) {
       currentValue.push(line);
     }
   }
   flush();
 
-  // Clean link field — strip markdown brackets if the model wrote
-  // [label](url) or surrounded with < >.
+  // Normalize Link: strip markdown brackets / angle brackets.
   if (event.link) {
     const markdownLink = event.link.match(/\((https?:\/\/[^)]+)\)/);
     if (markdownLink) {
@@ -158,24 +188,21 @@ function extractTrailingField(
 ): string | undefined {
   if (!trailing) return undefined;
   const re = new RegExp(
-    `\\*\\*${label}\\*\\*\\s*:\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)`,
+    `\\*\\*${escapeForRegex(label)}\\*\\*\\s*:\\s*([\\s\\S]*?)(?=\\n\\*\\*|$)`,
     "i"
   );
   const m = trailing.match(re);
   return m ? m[1].trim() : undefined;
 }
 
-export function eventToMarkdown(e: ParsedEvent): string {
-  return e.raw;
+function escapeForRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export function streamClassifyState(md: string): {
   eventsSoFar: number;
   activeHeading: string | null;
 } {
-  // Count how many `### N. ...` headings have appeared so far, and
-  // what the last one was. Useful for live progress indicators during
-  // streaming.
   const headings = Array.from(md.matchAll(/###\s+(\d+)\.\s*(.+?)\s*$/gm));
   return {
     eventsSoFar: headings.length,
@@ -183,4 +210,8 @@ export function streamClassifyState(md: string): {
       ? headings[headings.length - 1][2]
       : null,
   };
+}
+
+export function eventToMarkdown(e: ParsedEvent): string {
+  return e.raw;
 }

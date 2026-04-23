@@ -849,10 +849,18 @@ function StreamingState({
 
 function EventCard({ event: e }: { event: ParsedEvent }) {
   const [copied, setCopied] = useState(false);
-  const streamColor =
-    e.stream?.toUpperCase() === "HALO"
-      ? "var(--amber)"
-      : "var(--frost)";
+  const typeColor = (() => {
+    const t = (e.type ?? "").toLowerCase();
+    if (t.includes("halo")) return "var(--amber)";
+    if (t.includes("seed")) return "var(--sage)";
+    return "var(--frost)";
+  })();
+  const priorityColor = (() => {
+    const p = (e.priority ?? "").toLowerCase();
+    if (p.includes("high")) return "var(--frost)";
+    if (p.includes("medium")) return "var(--fg-100)";
+    return "var(--fg-52)";
+  })();
   const copyEvent = async () => {
     try {
       await navigator.clipboard.writeText(e.raw);
@@ -875,25 +883,53 @@ function EventCard({ event: e }: { event: ParsedEvent }) {
       />
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className="font-mono text-[11px] font-medium uppercase tracking-[0.18em]"
               style={{ color: "var(--fg-52)" }}
             >
               {e.num.padStart(2, "0")}
             </span>
-            {e.stream && (
+            {e.type && (
               <span
                 className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
                 style={{
                   padding: "2px 6px",
                   background: "var(--ink-deep)",
-                  border: `1px solid ${streamColor}`,
-                  color: streamColor,
+                  border: `1px solid ${typeColor}`,
+                  color: typeColor,
                   borderRadius: 2,
                 }}
               >
-                {e.stream}
+                {e.type}
+              </span>
+            )}
+            {e.priority && (
+              <span
+                className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+                style={{
+                  padding: "2px 6px",
+                  background: "transparent",
+                  border: "1px solid var(--fg-16)",
+                  color: priorityColor,
+                  borderRadius: 2,
+                }}
+              >
+                Priority · {e.priority}
+              </span>
+            )}
+            {e.travelBurden && (
+              <span
+                className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+                style={{
+                  padding: "2px 6px",
+                  background: "transparent",
+                  border: "1px solid var(--fg-16)",
+                  color: "var(--fg-72)",
+                  borderRadius: 2,
+                }}
+              >
+                {e.travelBurden}
               </span>
             )}
           </div>
@@ -903,6 +939,14 @@ function EventCard({ event: e }: { event: ParsedEvent }) {
           >
             {e.title}
           </h3>
+          {e.whyItFits && (
+            <p
+              className="mt-2 text-[13px] leading-[1.55] italic"
+              style={{ color: "var(--frost)" }}
+            >
+              {e.whyItFits}
+            </p>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {e.link && (
@@ -938,29 +982,25 @@ function EventCard({ event: e }: { event: ParsedEvent }) {
         </div>
       </header>
 
-      <dl className="mt-4 grid grid-cols-1 gap-x-5 gap-y-2.5 md:grid-cols-[150px_1fr]">
+      <dl className="mt-5 grid grid-cols-1 gap-x-5 gap-y-2.5 md:grid-cols-[150px_1fr]">
         {e.dates && <Row label="Dates" value={e.dates} />}
         {e.location && <Row label="Location" value={e.location} />}
-        {e.audienceFit && <Row label="Audience fit" value={e.audienceFit} />}
-        {e.themeFit && <Row label="Theme fit" value={e.themeFit} />}
-        {e.speakingRoute && (
-          <Row label="Speaking route" value={e.speakingRoute} />
+        {e.about && <Row label="About" value={e.about} />}
+        {e.focusAreas && <RowBlock label="Focus areas" value={e.focusAreas} />}
+        {e.typicalAttendees && (
+          <Row label="Typical attendees" value={e.typicalAttendees} />
         )}
-        {e.sponsorshipRoute && (
-          <Row label="Sponsorship route" value={e.sponsorshipRoute} />
+        {e.speakingRoute && (
+          <RowBlock label="Speaking route" value={e.speakingRoute} />
         )}
         {e.payToPlay && (
           <Row
             label="Pay-to-play"
             value={e.payToPlay}
             accent={
-              /partial|yes/i.test(e.payToPlay) ? "var(--amber)" : undefined
+              /yes/i.test(e.payToPlay) ? "var(--amber)" : undefined
             }
           />
-        )}
-        {e.whyPartner && <Row label="Why this partner" value={e.whyPartner} />}
-        {e.travelBurden && (
-          <Row label="Travel burden" value={e.travelBurden} />
         )}
         {Object.entries(e.extra).map(([k, v]) => (
           <Row key={k} label={k} value={v} />
@@ -992,6 +1032,70 @@ function Row({
         style={{ color: accent ?? "var(--fg-100)" }}
       >
         {value}
+      </dd>
+    </>
+  );
+}
+
+// Render a multi-line block value (e.g. bulleted Focus areas or
+// Speaking route) preserving the bullets with native list styling.
+function RowBlock({ label, value }: { label: string; value: string }) {
+  const lines = value
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const items = lines.filter((l) => /^[-*•]\s+/.test(l));
+  const other = lines.filter((l) => !/^[-*•]\s+/.test(l));
+
+  return (
+    <>
+      <dt
+        className="font-mono text-[10px] font-medium uppercase tracking-[0.16em]"
+        style={{ color: "var(--fg-52)", paddingTop: 1 }}
+      >
+        {label}
+      </dt>
+      <dd className="m-0 text-[13.5px] leading-[1.55]" style={{ color: "var(--fg-100)" }}>
+        {other.length > 0 && (
+          <div className="mb-1">{other.join(" ")}</div>
+        )}
+        {items.length > 0 && (
+          <ul className="m-0 list-none p-0">
+            {items.map((l, i) => {
+              const cleaned = l.replace(/^[-*•]\s+/, "");
+              // Sub-bullets in Speaking route are "label: value" — style
+              // the label portion in mono.
+              const subLabel = cleaned.match(/^([^:]{1,40}):\s*(.*)$/);
+              if (subLabel) {
+                return (
+                  <li
+                    key={i}
+                    className="flex gap-3 py-0.5"
+                    style={{ color: "var(--fg-100)" }}
+                  >
+                    <span
+                      className="shrink-0 font-mono text-[10px] uppercase tracking-[0.14em]"
+                      style={{ color: "var(--fg-52)", minWidth: 120, paddingTop: 2 }}
+                    >
+                      {subLabel[1].trim()}
+                    </span>
+                    <span className="flex-1">{subLabel[2].trim()}</span>
+                  </li>
+                );
+              }
+              return (
+                <li
+                  key={i}
+                  className="flex gap-3 py-0.5"
+                  style={{ color: "var(--fg-100)" }}
+                >
+                  <span style={{ color: "var(--fg-32)" }}>•</span>
+                  <span className="flex-1">{cleaned}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </dd>
     </>
   );
