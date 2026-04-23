@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { marked } from "marked";
+import { PARTNER_PRESETS, findPreset } from "@/lib/event-sourcer/partner-presets";
 
 /*
   Event sourcer client.
@@ -54,15 +55,95 @@ const INITIAL: Inputs = {
   seedEvents: "",
 };
 
+const STORAGE_KEY = "arcticmind:event-sourcer:last-inputs";
+
 export function EventSourcerApp() {
   const [inputs, setInputs] = useState<Inputs>(INITIAL);
   const [output, setOutput] = useState("");
   const [running, setRunning] = useState(false);
   const [source, setSource] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [presetId, setPresetId] = useState<string>("");
+  const outputRef = useRef<HTMLDivElement | null>(null);
+
+  // Hydrate from localStorage once on mount.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Inputs>;
+        setInputs((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  // Persist any change after hydration.
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
+    } catch {}
+  }, [inputs, hydrated]);
+
+  // Auto-scroll the output container as new tokens stream in.
+  useEffect(() => {
+    if (!running || !outputRef.current) return;
+    outputRef.current.scrollTop = outputRef.current.scrollHeight;
+  }, [output, running]);
 
   const set = <K extends keyof Inputs>(key: K, value: Inputs[K]) =>
     setInputs((prev) => ({ ...prev, [key]: value }));
+
+  const applyPreset = (id: string) => {
+    setPresetId(id);
+    const p = findPreset(id);
+    if (!p) return;
+    setInputs((prev) => ({
+      ...prev,
+      partnerName: p.label,
+      partnerHomeBase: p.homeBase,
+      partnerFocus: p.focus,
+      audienceTargets: p.audienceTargets,
+      themeTargets: p.themeTargets,
+      regionalScope: p.regionalScope ?? prev.regionalScope,
+      haloCapPercent:
+        typeof p.haloCapPercent === "number"
+          ? String(p.haloCapPercent)
+          : prev.haloCapPercent,
+    }));
+  };
+
+  const resetForm = () => {
+    setPresetId("");
+    setInputs(INITIAL);
+    setOutput("");
+    setSource(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+  };
+
+  const downloadMarkdown = () => {
+    if (!output) return;
+    const filename = `events-${(inputs.partnerName || "partner")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")}-${inputs.windowStart}-to-${inputs.windowEnd}.md`;
+    const header = `# Event list — ${inputs.partnerName || "(unnamed partner)"}\n\n`;
+    const meta = `_Window: ${inputs.windowStart} → ${inputs.windowEnd} · Region: ${
+      inputs.regionalScope || "Global"
+    }${inputs.industry ? ` · Industry: ${inputs.industry}` : ""}_\n\n---\n\n`;
+    const blob = new Blob([header + meta + output], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const requiredOk =
     inputs.partnerName.trim() &&
@@ -175,6 +256,39 @@ export function EventSourcerApp() {
           <div className="flex items-center gap-3">
             <span className="kicker">Partner</span>
             <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+            <button
+              type="button"
+              onClick={resetForm}
+              className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+              style={{ color: "var(--fg-52)" }}
+            >
+              Reset
+            </button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="kicker-sm">Preset</span>
+            <button
+              type="button"
+              className="chip"
+              data-active={presetId === ""}
+              onClick={() => setPresetId("")}
+              disabled={running}
+            >
+              Blank
+            </button>
+            {PARTNER_PRESETS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="chip"
+                data-active={presetId === p.id}
+                onClick={() => applyPreset(p.id)}
+                disabled={running}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
           <FieldGrid>
             <Field label="Partner name" required>
@@ -393,9 +507,14 @@ export function EventSourcerApp() {
               </span>
             )}
             {output && !running && (
-              <button onClick={copy} className="btn-secondary">
-                {copied ? "Copied" : "Copy markdown"}
-              </button>
+              <>
+                <button onClick={copy} className="btn-secondary">
+                  {copied ? "Copied" : "Copy"}
+                </button>
+                <button onClick={downloadMarkdown} className="btn-secondary">
+                  Download .md
+                </button>
+              </>
             )}
           </div>
 
@@ -403,6 +522,7 @@ export function EventSourcerApp() {
 
           {(running || output) && (
             <motion.div
+              ref={outputRef}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
@@ -411,6 +531,8 @@ export function EventSourcerApp() {
                 background: "var(--ink-raised)",
                 border: "1px solid var(--fg-16)",
                 borderRadius: 2,
+                maxHeight: "calc(100vh - 220px)",
+                overflowY: "auto",
               }}
             >
               {running && !output ? (
