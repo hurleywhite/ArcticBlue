@@ -28,11 +28,12 @@ npm run dev
 ```
 
 Required env vars:
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- `ANTHROPIC_API_KEY`
-- `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET` (Phase 1B+)
-- `NEXT_PUBLIC_POSTHOG_KEY` (optional)
+- `ANTHROPIC_API_KEY` — Claude Sonnet 4.6 + Opus 4.7 (required for Practice, Analyzer, Dashboard justifications)
+- `SERPAPI_KEY` — enables Company Analyzer job-listing extraction. Without it, the Analyzer falls back to web-search enrichment only.
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` — auth (optional until production rollout)
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` — persistence (optional; UI uses localStorage until wired)
+- `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET` — video module playback (Phase 1B+)
+- `NEXT_PUBLIC_POSTHOG_KEY` — analytics (optional)
 
 ## Design rules at a glance
 

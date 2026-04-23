@@ -9,9 +9,11 @@ import Link from "next/link";
 const NAV_ITEMS: Array<{ label: string; href: string; comingSoon?: boolean }> = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Canvas", href: "/canvas" },
+  { label: "Analyzer", href: "/analyzer" },
   { label: "Learning", href: "/learning" },
   { label: "Use Cases", href: "/use-cases" },
   { label: "Tools", href: "/tools" },
+  { label: "Resources", href: "/resources" },
   { label: "News", href: "/news", comingSoon: true },
   { label: "Admin", href: "/admin" },
 ];

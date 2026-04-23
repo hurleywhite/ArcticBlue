@@ -1,13 +1,24 @@
 import Link from "next/link";
+import { MODULES } from "@/lib/content/modules";
+import { USE_CASES } from "@/lib/content/use-cases";
+import { PROMPTS } from "@/lib/content/prompts";
+import { TEMPLATES } from "@/lib/content/templates";
+import { COLLECTIONS } from "@/lib/content/collections";
+import { DEMO_DATA } from "@/lib/canvas/demo-data";
 
 /*
-  Home page — editorial one-pager treatment.
-  Mirrors the ArcticBrief layout: navy header band (from TopNav), big
-  headline in Arial, callout in ice blue, "what we do" 3-column table,
-  "how it works" numbered rows, tier table.
+  Landing page. Editorial one-pager treatment that doubles as a home
+  dashboard: navy title band, ice-blue callout, four product surfaces
+  (Canvas, Learning, Use Cases, Tools) presented as a workflow, a
+  library index, and a direct CTA into the Canvas.
+
+  This is the product itself — not a marketing page. No pricing, no
+  engagement tiers. Those belong on arcticblue.ai.
 */
 
 export default function HomePage() {
+  const canvasCount = Object.keys(DEMO_DATA).length;
+
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-10">
       {/* Title band */}
@@ -22,153 +33,170 @@ export default function HomePage() {
             </h1>
           </div>
           <div className="text-[11px] uppercase tracking-[0.12em] opacity-80">
-            Strategy · Testing · Implementation
+            Canvas · Learning · Use Cases · Tools
           </div>
         </div>
       </section>
 
       {/* Callout */}
       <section className="callout mt-6">
-        <p className="text-[14px]">
-          Most enterprises have bought AI. Very few have adopted it. ArcticBlue
-          trains the pilots — the executives and leaders setting strategy.
-          ArcticMind trains the crew — the workforce who has to actually use it.
+        <p>
+          Four integrated surfaces, one spine. Start with the Canvas — map where
+          AI moves the needle for your role — then the rest of the platform
+          personalizes: learning modules, case studies, practice prompts, and
+          templates all tailored to what you starred.
         </p>
       </section>
 
-      {/* What we do — 3 columns */}
-      <h2 className="section-header mt-10 mb-3">What ArcticMind does</h2>
-      <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-3">
-        <WhatCell
+      {/* Primary CTA — directly into the product */}
+      <section className="mt-6 flex flex-col items-start justify-between gap-4 border border-ink-border bg-bg-card px-6 py-5 md:flex-row md:items-center">
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy">
+            Start here
+          </div>
+          <div className="mt-1 text-[16px] font-bold">
+            Build your Opportunity Canvas in under three minutes.
+          </div>
+          <div className="mt-1 text-[12px] text-ink-muted">
+            Eight role- and industry-specific opportunities, three strategic
+            lenses. Star what matters. Everything downstream personalizes.
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard" className="btn-secondary">
+            Your dashboard
+          </Link>
+          <Link href="/canvas" className="btn-primary">
+            Open the Canvas →
+          </Link>
+        </div>
+      </section>
+
+      {/* What the platform does — workflow, not marketing */}
+      <h2 className="section-header mt-10 mb-3">The platform</h2>
+      <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-4">
+        <SurfaceCell
           kicker="01 · Canvas"
           title="Map the opportunity"
-          body="An interactive, role- and industry-specific canvas of where AI actually moves the needle — eight opportunities per canvas, three lenses to re-frame priority, a starred shortlist you can turn into a roadmap."
+          body="Pick a role and industry. ArcticMind plots eight specific opportunities across three strategic lenses."
+          stat={`${canvasCount} templates`}
           href="/canvas"
         />
-        <WhatCell
+        <SurfaceCell
           kicker="02 · Learning"
           title="Build the skills"
-          body="A curated library of modules — video, reading, exercises, workshops — maintained by ArcticBlue facilitators and matched to the opportunities you starred on the Canvas."
+          body="A curated library of reading, video, exercises, and workshops — filtered to what you starred."
+          stat={`${MODULES.length} modules · ${COLLECTIONS.length} collections`}
           href="/learning"
         />
-        <WhatCell
-          kicker="03 · Use Cases + Tools"
+        <SurfaceCell
+          kicker="03 · Use Cases"
+          title="See it done before"
+          body="Anonymized proof points from ArcticBlue engagements — story, one-pager, slides."
+          stat={`${USE_CASES.length} cases`}
+          href="/use-cases"
+        />
+        <SurfaceCell
+          kicker="04 · Tools"
           title="Practice before you ship"
-          body="Anonymized case studies from ArcticBlue's real engagements, a reusable prompt library, and a seeded chat sandbox — so learners try the work before doing it on real deliverables."
+          body="Seeded chat sandbox, curated prompts, structured templates. Text only; every session has context."
+          stat={`${PROMPTS.length} prompts · ${TEMPLATES.length} templates`}
           href="/tools"
-        />
-      </div>
-
-      {/* How it works — numbered rows */}
-      <h2 className="section-header mt-12 mb-3">How it works</h2>
-      <div className="border border-ink-border">
-        <HowRow
-          n="01"
-          title="Diagnose the gap — by role and industry"
-          body="Pick a role and an industry. ArcticMind plots eight specific opportunities across three strategic lenses. This is the entry point and the spine of the product."
-        />
-        <HowRow
-          n="02"
-          title="Star what matters"
-          body="Save the opportunities worth pursuing. Your stars drive everything else — modules, case studies, and prompts the product surfaces from here on."
-        />
-        <HowRow
-          n="03"
-          title="Learn against the stars"
-          body="The Learning Hub filters to exactly the modules relevant to what you starred. No maze of generic AI courses — the shortest path to being good at your specific opportunity."
-        />
-        <HowRow
-          n="04"
-          title="Practice in a sandbox"
-          body="Tools seeds a practice session with your Canvas context — so you try AI on a real version of the work before trusting it on a real deliverable."
           last
         />
       </div>
 
-      {/* Tiers — a simple 3-column reference to ArcticBlue's engagement ladder */}
-      <h2 className="section-header mt-12 mb-3">Engagement context</h2>
-      <table className="doc-table">
-        <thead>
-          <tr>
-            <th style={{ width: "15%" }}>Tier</th>
-            <th>Description</th>
-            <th style={{ width: "18%" }}>Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <strong>T1</strong> · Executive AI Mindset
-            </td>
-            <td>Half-day executive workshop — set the strategic frame and expectations for AI in the business.</td>
-            <td>$10K</td>
-          </tr>
-          <tr>
-            <td>
-              <strong>T2</strong> · Functional Manager Deep Dive
-            </td>
-            <td>Tool inventory, AI-readiness diagnosis, and three workshops over six months for functional leaders.</td>
-            <td>$10K</td>
-          </tr>
-          <tr>
-            <td>
-              <strong>AM</strong> · AI Practical Labs
-            </td>
-            <td>Monthly 90-minute live sessions for up to 20 — new challenge, current tools, real work.</td>
-            <td>$30K / mo</td>
-          </tr>
-          <tr>
-            <td>
-              <strong>T3</strong> · Continuous AI Enablement
-            </td>
-            <td>Living platform that monitors tools, teaches usage, and generates org-wide content. Two-year minimum.</td>
-            <td>$10K / yr</td>
-          </tr>
-          <tr>
-            <td>
-              <strong>T4</strong> · AI Agent Hub
-            </td>
-            <td>A software hub and management layer for your org's AI agents — built to your stack.</td>
-            <td>Custom</td>
-          </tr>
-        </tbody>
-      </table>
+      {/* How the spine works — numbered rows */}
+      <h2 className="section-header mt-10 mb-3">How it works</h2>
+      <div className="border border-ink-border">
+        <HowRow
+          n="01"
+          title="Start on the Canvas"
+          body="Pick your role and industry. In under three minutes you'll have a working map of opportunities calibrated to the work you actually do."
+        />
+        <HowRow
+          n="02"
+          title="Star what matters"
+          body="Your stars become the spine. Every other surface — Learning, Use Cases, Tools — personalizes around them."
+        />
+        <HowRow
+          n="03"
+          title="Learn against your stars"
+          body="Shortest path to being good at your specific opportunity. No maze of generic AI courses."
+        />
+        <HowRow
+          n="04"
+          title="Practice in a sandbox"
+          body="Try AI on a bounded version of the real work before using it on a real deliverable."
+          last
+        />
+      </div>
 
-      <div className="mt-12 flex items-center justify-between border-t border-ink-border pt-6">
-        <div className="text-[12px] text-ink-muted">
-          Ready to see where AI moves the needle for your role?
-        </div>
-        <Link href="/canvas" className="btn-primary inline-block">
-          Open the Canvas →
+      {/* Direct entry points to each surface */}
+      <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Link
+          href="/canvas"
+          className="border border-ink-border bg-white px-6 py-5 transition hover:border-navy"
+        >
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy">
+            Begin → Canvas
+          </div>
+          <div className="mt-1 text-[16px] font-bold text-ink">
+            Generate your Opportunity Canvas
+          </div>
+          <p className="mt-1 text-[12px] text-ink-muted">
+            A 2×2 grid of opportunities, three lenses. Stars drive personalization.
+          </p>
+        </Link>
+        <Link
+          href="/dashboard"
+          className="border border-ink-border bg-white px-6 py-5 transition hover:border-navy"
+        >
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy">
+            Returning → Dashboard
+          </div>
+          <div className="mt-1 text-[16px] font-bold text-ink">
+            Pick up where you left off
+          </div>
+          <p className="mt-1 text-[12px] text-ink-muted">
+            Recommended content, in-progress learning, recent practice sessions.
+          </p>
         </Link>
       </div>
     </div>
   );
 }
 
-function WhatCell({
+function SurfaceCell({
   kicker,
   title,
   body,
+  stat,
   href,
+  last,
 }: {
   kicker: string;
   title: string;
   body: string;
+  stat: string;
   href: string;
+  last?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="group block border-ink-border bg-bg-card px-6 py-5 transition hover:bg-ice md:border-r md:last:border-r-0"
+      className={`group block bg-bg-card px-5 py-4 transition hover:bg-ice ${
+        last ? "" : "md:border-r md:border-ink-border"
+      } border-b border-ink-border md:border-b-0`}
     >
       <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy">
         {kicker}
       </div>
       <div className="mt-1 text-[14px] font-bold text-ink">{title}</div>
-      <p className="mt-2 text-[13px] leading-[1.55] text-ink">{body}</p>
-      <div className="mt-3 text-[11px] font-bold uppercase tracking-[0.12em] text-navy group-hover:underline">
-        Open →
+      <p className="mt-2 text-[12px] leading-[1.55] text-ink">{body}</p>
+      <div className="mt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
+        <span>Open →</span>
+        <span className="text-ink-muted">{stat}</span>
       </div>
     </Link>
   );
