@@ -100,9 +100,14 @@ export default function LibraryPage() {
         title="Reference material."
         description="Prompts, templates, cases, resources, and learning modules. Filter by kind or topic. Cite copies a reference to the clipboard."
         right={
-          <Link href="/library/compose" className="btn-secondary">
-            Compose proposal →
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/library/compose" className="btn-secondary">
+              Compose proposal →
+            </Link>
+            <Link href="/tools/event-sourcer" className="btn-secondary">
+              Event sourcer →
+            </Link>
+          </div>
         }
       />
 

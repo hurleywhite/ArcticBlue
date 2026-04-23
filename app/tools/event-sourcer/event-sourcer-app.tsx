@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { marked } from "marked";
 import { PARTNER_PRESETS, findPreset } from "@/lib/event-sourcer/partner-presets";
+import { composeUserMessage } from "@/lib/event-sourcer/compose";
 
 /*
   Event sourcer client.
@@ -65,6 +66,7 @@ export function EventSourcerApp() {
   const [copied, setCopied] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [presetId, setPresetId] = useState<string>("");
+  const [showPrompt, setShowPrompt] = useState(false);
   const outputRef = useRef<HTMLDivElement | null>(null);
 
   // Hydrate from localStorage once on mount.
@@ -238,6 +240,31 @@ export function EventSourcerApp() {
     () => (output ? (marked.parse(output, { async: false }) as string) : ""),
     [output]
   );
+
+  const previewUserMessage = useMemo(() => {
+    if (!requiredOk) return "";
+    return composeUserMessage({
+      partnerName: inputs.partnerName.trim(),
+      partnerHomeBase: inputs.partnerHomeBase.trim(),
+      partnerFocus: inputs.partnerFocus.trim(),
+      audienceTargets: inputs.audienceTargets.trim(),
+      themeTargets: inputs.themeTargets.trim(),
+      windowStart: inputs.windowStart,
+      windowEnd: inputs.windowEnd,
+      regionalScope: inputs.regionalScope.trim() || "Global",
+      industry: inputs.industry.trim() || undefined,
+      seedEvents: inputs.seedEvents.trim() || undefined,
+      eventCountMin: inputs.eventCountMin
+        ? Number(inputs.eventCountMin)
+        : undefined,
+      eventCountMax: inputs.eventCountMax
+        ? Number(inputs.eventCountMax)
+        : undefined,
+      haloCapPercent: inputs.haloCapPercent
+        ? Number(inputs.haloCapPercent)
+        : undefined,
+    });
+  }, [inputs, requiredOk]);
 
   return (
     <div>
@@ -460,6 +487,34 @@ export function EventSourcerApp() {
               />
             </Field>
           </FieldGrid>
+
+          {requiredOk && (
+            <div className="mt-8">
+              <button
+                type="button"
+                onClick={() => setShowPrompt((s) => !s)}
+                className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+                style={{ color: "var(--frost)" }}
+              >
+                {showPrompt ? "Hide Dust prompt" : "Show Dust prompt"} →
+              </button>
+              {showPrompt && (
+                <pre
+                  className="mt-3 max-h-[280px] overflow-auto px-4 py-3 text-[11.5px] leading-[1.6] whitespace-pre-wrap"
+                  style={{
+                    background: "var(--ink-deep)",
+                    border: "1px solid var(--fg-16)",
+                    color: "var(--fg-72)",
+                    fontFamily:
+                      "var(--font-ibm-plex-mono), ui-monospace, monospace",
+                    borderRadius: 2,
+                  }}
+                >
+                  {previewUserMessage}
+                </pre>
+              )}
+            </div>
+          )}
 
           <div
             className="mt-8 flex items-center justify-between gap-3 border-t pt-5"
