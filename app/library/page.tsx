@@ -94,29 +94,21 @@ export default function LibraryPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-8">
+    <div className="shell pb-32">
       <PageHeader
         kicker="Library"
         title="Reference material."
+        description="Prompts, templates, cases, resources, and learning modules. Filter by kind or topic. Cite copies a reference to the clipboard."
         right={
-          <Link
-            href="/library/compose"
-            className="btn-secondary inline-block bg-white"
-          >
+          <Link href="/library/compose" className="btn-secondary">
             Compose proposal →
           </Link>
         }
       />
 
-      <div className="callout mt-6">
-        <p>
-          Prompts, templates, cases, resources, and learning modules. Filter by
-          kind or topic. Cite copies a reference to the clipboard. Compose picks
-          3–5 items and drafts a proposal body.
-        </p>
+      <div className="mt-12">
+        <LibraryBrowser items={items} counts={counts} />
       </div>
-
-      <LibraryBrowser items={items} counts={counts} />
     </div>
   );
 }

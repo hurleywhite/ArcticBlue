@@ -3,234 +3,760 @@
 @tailwind utilities;
 
 /*
-  ArcticMind — editorial base layer.
-  Reference: docs/design-system.md
-  The whole aesthetic comes from discipline in three places: typography,
-  layout grammar (tables, not cards), and restraint (no gradients, shadows,
-  or decorative affordances).
+  ArcticMind — dark-first design system.
+  Canvas is ink; cards raise to ink-raised. Three-face type system
+  (Instrument Serif display · IBM Plex Sans body · IBM Plex Mono label).
+  One easing curve, sparing accents, grain + fine-dot textural layers.
 */
 
 :root {
-  --navy: #1F3A5F;
-  --navy-hover: #2A4A7A;
-  --ice: #D5E8F0;
-  --bg-page: #FFFFFF;
-  --bg-card: #F3F6F9;
-  --ink: #1A1A1A;
-  --ink-muted: #555555;
-  --ink-border: #CCCCCC;
+  /* Canvas */
+  --ink: #0B1E3F;
+  --ink-deep: #060F22;
+  --ink-raised: #11254B;
+  --paper: #F6F3EC;
+  --paper-raised: #FFFFFF;
+  --chalk: #E8E2D3;
+
+  /* Accent */
+  --frost: #8BB2ED;
+  --frost-deep: #3E6CB0;
+  --frost-glow: rgba(139, 178, 237, 0.35);
+  --amber: #FFD074;
+  --sage: #A3D9B1;
+  --rose: #D89AC9;
+
+  /* Foreground opacity scale on dark bg */
+  --fg-100: #F6F3EC;
+  --fg-72: rgba(246, 243, 236, 0.72);
+  --fg-52: rgba(246, 243, 236, 0.52);
+  --fg-32: rgba(246, 243, 236, 0.32);
+  --fg-16: rgba(246, 243, 236, 0.16);
+  --fg-8: rgba(246, 243, 236, 0.08);
+
+  /* Legacy fg scale on paper bg (for export views) */
+  --paper-fg-100: #0B1E3F;
+  --paper-fg-68: rgba(11, 30, 63, 0.68);
+  --paper-fg-46: rgba(11, 30, 63, 0.46);
+  --paper-fg-28: rgba(11, 30, 63, 0.28);
+  --paper-fg-14: rgba(11, 30, 63, 0.14);
+  --paper-fg-6: rgba(11, 30, 63, 0.06);
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-quick: 200ms;
+  --dur-base: 250ms;
+  --dur-slow: 400ms;
+  --dur-enter: 600ms;
+  --dur-breath: 3800ms;
+
+  /* Layout */
+  --shell-max: 1280px;
+  --shell-pad: 48px;
 }
 
-html, body {
-  background: var(--bg-page);
-  color: var(--ink);
-  font-family: Arial, Helvetica, "Helvetica Neue", sans-serif;
-  font-size: 13px;
+@media (max-width: 768px) {
+  :root {
+    --shell-pad: 24px;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Base canvas + type
+   --------------------------------------------------------------------- */
+
+html {
+  background: var(--ink);
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--ink);
+  color: var(--fg-100);
+  font-family: var(--font-ibm-plex-sans), system-ui, -apple-system, sans-serif;
+  font-size: 15px;
   line-height: 1.55;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.003em;
 }
 
 ::selection {
-  background: var(--navy);
-  color: #FFFFFF;
+  background: var(--frost);
+  color: var(--ink-deep);
 }
 
-/* Section headers: small caps, navy, wide tracking */
-.section-header {
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--navy);
-  font-size: 11px;
+/* Scrollbar — subtle, matches the ink aesthetic */
+html {
+  scrollbar-color: var(--fg-16) transparent;
 }
-
-/* Document-style tables — the layout grammar of the whole product */
-.doc-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1px solid var(--ink-border);
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
-.doc-table th,
-.doc-table td {
-  border: 1px solid var(--ink-border);
-  padding: 10px 18px;
-  text-align: left;
-  vertical-align: top;
-}
-.doc-table thead th {
-  background: var(--navy);
-  color: #FFFFFF;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-}
-
-/* Callout block — ice blue, one of the few expressive moves */
-.callout {
-  background: var(--ice);
-  border-left: 3px solid var(--navy);
-  padding: 14px 18px;
-}
-
-/* Card surface — light gray-blue, no shadow, no rounding */
-.card-surface {
-  background: var(--bg-card);
-  border: 1px solid var(--ink-border);
-  padding: 14px 18px;
-}
-
-/* Primary button: navy fill, white type, no border radius above 2px */
-.btn-primary {
-  background: var(--navy);
-  color: #FFFFFF;
-  padding: 10px 18px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border: 1px solid var(--navy);
-  cursor: pointer;
-  transition: background 120ms ease;
-}
-.btn-primary:hover {
-  background: var(--navy-hover);
-}
-.btn-primary:disabled {
-  background: var(--ink-border);
-  border-color: var(--ink-border);
-  color: var(--ink-muted);
-  cursor: not-allowed;
-}
-
-.btn-secondary {
+::-webkit-scrollbar-track {
   background: transparent;
-  color: var(--navy);
-  padding: 10px 18px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--fg-16);
+  border-radius: 2px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-32);
+  background-clip: padding-box;
+}
+
+/* Focus ring — frost at 60%, sharp edge */
+*:focus-visible {
+  outline: 1px solid var(--frost);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Textural layers — the thing that separates this from default dark SaaS
+   --------------------------------------------------------------------- */
+
+/*
+  Layer 1 — grain overlay at ~4%, multiply blend.
+  Inline SVG noise. Renders on the whole app via a single fixed div.
+*/
+.grain-layer {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+}
+
+/*
+  Layer 2 — fine dot lattice at 2.5%, for quiet texture on large
+  expanses of canvas. Scroll-fixed so it doesn't parallax against content.
+*/
+.dot-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(246, 243, 236, 0.06) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at 50% 20%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 20%, black 0%, transparent 70%);
+}
+
+/*
+  Layer 3 — subtle vignette halo that fades the edges. Only perceptible
+  on large screens. Helps focus center composition without hard borders.
+*/
+.vignette-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at 50% 35%,
+    transparent 0%,
+    transparent 55%,
+    rgba(6, 15, 34, 0.65) 110%
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Components — primitives
+   --------------------------------------------------------------------- */
+
+/* Kicker / mono label — UPPERCASE, wide tracking, low opacity */
+.kicker {
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
   font-size: 11px;
-  font-weight: 700;
+  line-height: 1.3;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border: 1px solid var(--navy);
-  cursor: pointer;
+  color: var(--fg-52);
 }
-.btn-secondary:hover {
-  background: var(--bg-card);
+.kicker-sm {
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  line-height: 1.3;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-52);
 }
-
-/* Numeral box — the "01 / 02 / 03" markers on how-it-works sequences */
-.numeral-box {
-  background: var(--navy);
-  color: #FFFFFF;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 10px 14px;
-  display: inline-block;
-  min-width: 36px;
-  text-align: center;
+.kicker-frost {
+  color: var(--frost);
+  opacity: 0.85;
 }
 
-/* Hairline dividers */
+/* Serif display + headings */
+.serif {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+.serif-tight {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+.serif em,
+.serif i {
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Section header — sits above content blocks */
+.section-header {
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-52);
+}
+
+/* Hairline divider */
 .rule {
   height: 1px;
-  background: var(--ink-border);
+  background: var(--fg-16);
   border: 0;
 }
 
-/* Inputs — unadorned, thin border, no rounded corners */
+/* Surface — raised card on ink bg */
+.surface {
+  background: var(--ink-raised);
+  border: 1px solid var(--fg-16);
+  border-radius: 4px;
+  transition: border-color var(--dur-base) var(--ease),
+    box-shadow var(--dur-base) var(--ease);
+}
+.surface-subtle {
+  background: var(--ink-deep);
+  border: 1px solid var(--fg-16);
+  border-radius: 4px;
+}
+.surface-hover:hover {
+  border-color: var(--fg-32);
+  box-shadow: 0 0 0 1px var(--frost-glow);
+}
+
+/* Card frame for PDF export paths — stays on paper */
+.paper-surface {
+  background: var(--paper);
+  color: var(--paper-fg-100);
+  border: 1px solid var(--paper-fg-14);
+  border-radius: 4px;
+}
+
+/* Callout — quiet highlight, frost-tinted */
+.callout {
+  background: rgba(139, 178, 237, 0.08);
+  border-left: 2px solid var(--frost);
+  padding: 16px 20px;
+  color: var(--fg-72);
+  border-radius: 0 2px 2px 0;
+}
+.callout strong {
+  color: var(--fg-100);
+  font-weight: 500;
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper);
+  color: var(--ink-deep);
+  padding: 10px 16px;
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 1px solid var(--paper);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform var(--dur-quick) var(--ease),
+    background var(--dur-quick) var(--ease),
+    box-shadow var(--dur-quick) var(--ease);
+}
+.btn-primary:hover {
+  background: var(--paper-raised);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(246, 243, 236, 0.08);
+}
+.btn-primary:disabled {
+  background: var(--fg-16);
+  color: var(--fg-32);
+  border-color: var(--fg-16);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--fg-100);
+  padding: 10px 16px;
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 1px solid var(--fg-32);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color var(--dur-quick) var(--ease),
+    background var(--dur-quick) var(--ease);
+}
+.btn-secondary:hover {
+  border-color: var(--fg-72);
+  background: var(--fg-8);
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--fg-72);
+  padding: 6px 10px;
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 0;
+  cursor: pointer;
+  transition: color var(--dur-quick) var(--ease);
+}
+.btn-ghost:hover {
+  color: var(--fg-100);
+}
+
+/* Chips / pills */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-72);
+  border: 1px solid var(--fg-16);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--dur-quick) var(--ease),
+    color var(--dur-quick) var(--ease);
+}
+.chip:hover {
+  border-color: var(--fg-52);
+  color: var(--fg-100);
+}
+.chip[data-active="true"],
+.chip.active {
+  background: var(--frost);
+  color: var(--ink-deep);
+  border-color: var(--frost);
+}
+
+/* Inputs */
+input,
+select,
+textarea {
+  background: var(--ink-deep);
+  color: var(--fg-100);
+  caret-color: var(--frost);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--fg-32);
+}
 .input,
 .select,
 .textarea {
-  background: #FFFFFF;
-  border: 1px solid var(--ink-border);
-  padding: 8px 12px;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--ink);
   width: 100%;
+  background: var(--ink-deep);
+  color: var(--fg-100);
+  border: 1px solid var(--fg-16);
+  border-radius: 2px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color var(--dur-quick) var(--ease);
 }
 .input:focus,
 .select:focus,
 .textarea:focus {
   outline: none;
-  border-color: var(--navy);
+  border-color: var(--frost);
 }
 
-/* Editorial prose — applied to markdown-rendered module bodies and
-   use-case sections. No serif, no italics-for-everything, Arial
-   throughout, tight rhythm. */
+/* Document-style table — keep for admin + structured surfaces, re-skinned */
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--fg-16);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.doc-table th,
+.doc-table td {
+  border-bottom: 1px solid var(--fg-16);
+  border-right: 1px solid var(--fg-16);
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+  color: var(--fg-100);
+  font-size: 14px;
+}
+.doc-table th:last-child,
+.doc-table td:last-child {
+  border-right: 0;
+}
+.doc-table tr:last-child th,
+.doc-table tr:last-child td {
+  border-bottom: 0;
+}
+.doc-table thead th {
+  background: var(--ink-deep);
+  color: var(--fg-52);
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------
+   Prose (markdown render) — dark default
+   --------------------------------------------------------------------- */
+
+.prose-editorial {
+  color: var(--fg-100);
+  font-size: 15px;
+  line-height: 1.65;
+}
 .prose-editorial h1,
 .prose-editorial h2,
 .prose-editorial h3,
 .prose-editorial h4 {
-  color: var(--navy);
-  font-weight: 700;
-  line-height: 1.25;
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  color: var(--fg-100);
+  letter-spacing: -0.015em;
 }
-.prose-editorial h1 { font-size: 22px; margin: 28px 0 12px; }
-.prose-editorial h2 { font-size: 17px; margin: 22px 0 10px; }
-.prose-editorial h3 { font-size: 14px; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
-.prose-editorial h4 { font-size: 13px; margin: 14px 0 6px; }
-.prose-editorial p  { margin: 0 0 12px; line-height: 1.6; }
+.prose-editorial h1 { font-size: 32px; margin: 32px 0 16px; line-height: 1.1; }
+.prose-editorial h2 { font-size: 24px; margin: 28px 0 12px; line-height: 1.2; }
+.prose-editorial h3 {
+  font-family: var(--font-ibm-plex-sans), system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-72);
+  margin: 22px 0 8px;
+}
+.prose-editorial h4 {
+  font-family: var(--font-ibm-plex-sans), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 18px 0 6px;
+  color: var(--fg-100);
+}
+.prose-editorial p { margin: 0 0 14px; color: var(--fg-72); }
+.prose-editorial strong { color: var(--fg-100); font-weight: 500; }
+.prose-editorial em { font-style: italic; color: var(--fg-100); }
 .prose-editorial ul,
-.prose-editorial ol { margin: 0 0 14px 20px; padding: 0; }
-.prose-editorial li { margin: 4px 0; line-height: 1.55; }
-.prose-editorial strong { color: var(--navy); font-weight: 700; }
+.prose-editorial ol { margin: 0 0 16px 20px; color: var(--fg-72); }
+.prose-editorial li { margin: 5px 0; }
+.prose-editorial li::marker { color: var(--fg-32); }
 .prose-editorial blockquote {
-  background: var(--ice);
-  border-left: 3px solid var(--navy);
-  padding: 10px 16px;
-  margin: 12px 0;
-  font-style: normal;
+  margin: 14px 0;
+  padding: 12px 20px;
+  background: rgba(139, 178, 237, 0.08);
+  border-left: 2px solid var(--frost);
+  color: var(--fg-100);
 }
-.prose-editorial blockquote p { margin: 6px 0; }
+.prose-editorial blockquote p { margin: 4px 0; color: var(--fg-100); }
 .prose-editorial code {
-  background: var(--bg-card);
-  border: 1px solid var(--ink-border);
-  padding: 1px 5px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
   font-size: 12px;
+  padding: 2px 6px;
+  background: var(--ink-deep);
+  border: 1px solid var(--fg-16);
+  border-radius: 2px;
+  color: var(--frost);
 }
 .prose-editorial pre {
-  background: var(--bg-card);
-  border: 1px solid var(--ink-border);
-  padding: 12px 14px;
+  background: var(--ink-deep);
+  border: 1px solid var(--fg-16);
+  border-radius: 2px;
+  padding: 14px 16px;
   overflow-x: auto;
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 10px 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  margin: 12px 0;
+  color: var(--fg-72);
 }
-.prose-editorial pre code { background: transparent; border: 0; padding: 0; }
+.prose-editorial pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--fg-72);
+}
 .prose-editorial table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid var(--ink-border);
-  margin: 14px 0;
-  font-size: 12px;
+  border: 1px solid var(--fg-16);
+  margin: 16px 0;
+  font-size: 13px;
 }
 .prose-editorial th,
 .prose-editorial td {
-  border: 1px solid var(--ink-border);
-  padding: 8px 12px;
+  border: 1px solid var(--fg-16);
+  padding: 10px 14px;
   text-align: left;
-  vertical-align: top;
+  color: var(--fg-100);
 }
 .prose-editorial thead th {
-  background: var(--navy);
-  color: #FFFFFF;
-  font-weight: 700;
+  background: var(--ink-deep);
+  color: var(--fg-52);
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
   text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.18em;
 }
-.prose-editorial hr { border: 0; border-top: 1px solid var(--ink-border); margin: 18px 0; }
-.prose-editorial a { color: var(--navy); text-decoration: underline; }
-.prose-editorial a:hover { color: var(--navy-hover); }
+.prose-editorial hr {
+  border: 0;
+  border-top: 1px solid var(--fg-16);
+  margin: 24px 0;
+}
+.prose-editorial a {
+  color: var(--frost);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.prose-editorial a:hover {
+  color: var(--paper);
+}
 
-/* Subtle rise animation reserved for Canvas screens — kept because the
-   prototype's motion is part of the product's feel, just toned down */
-@keyframes riseIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* ---------------------------------------------------------------------
+   Ambient motion — the kinetic signature
+   --------------------------------------------------------------------- */
+
+/* Breathing — one focal element per screen */
+@keyframes breathe-opacity {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
 }
-.rise { animation: riseIn 400ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes breathe-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+.breathe {
+  animation: breathe-opacity var(--dur-breath) var(--ease) infinite;
+}
+.breathe-scale {
+  animation: breathe-scale var(--dur-breath) var(--ease) infinite;
+}
+
+/* Data pulse — connection lines, live dots, flow indicators */
+@keyframes data-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+.data-pulse {
+  animation: data-pulse 2000ms var(--ease) infinite;
+}
+
+/* Entrance rise — use sparingly; framer-motion handles most cases */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise-in {
+  animation: rise-in var(--dur-enter) var(--ease) both;
+}
+
+/* Stagger children via CSS custom properties when framer isn't used */
+.stagger > * {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: rise-in var(--dur-enter) var(--ease) forwards;
+  animation-delay: calc(var(--stagger-index, 0) * 60ms);
+}
+
+/* Subtle link underline — animated on hover */
+.link-frost {
+  color: var(--frost);
+  text-decoration: none;
+  position: relative;
+  padding-bottom: 1px;
+}
+.link-frost::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--frost);
+  transform-origin: left;
+  transform: scaleX(0.3);
+  opacity: 0.4;
+  transition: transform var(--dur-base) var(--ease),
+    opacity var(--dur-base) var(--ease);
+}
+.link-frost:hover::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+/* Data dot — tiny pulse on live indicators */
+.data-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--frost);
+  box-shadow: 0 0 0 0 var(--frost-glow);
+  animation: data-pulse 2000ms var(--ease) infinite;
+}
+.data-dot-amber {
+  background: var(--amber);
+  box-shadow: 0 0 8px rgba(255, 208, 116, 0.5);
+}
+.data-dot-sage {
+  background: var(--sage);
+  box-shadow: 0 0 8px rgba(163, 217, 177, 0.5);
+}
+
+/* Reduce motion — honor OS preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .breathe,
+  .breathe-scale,
+  .data-pulse,
+  .data-dot {
+    animation: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Legacy compatibility — old light-mode class patterns remap to the
+   dark palette so sub-pages don't look broken while they migrate.
+   --------------------------------------------------------------------- */
+
+.bg-white {
+  background-color: var(--ink-raised) !important;
+}
+.bg-bg-card {
+  background-color: var(--ink-deep) !important;
+}
+.bg-bg-page {
+  background-color: var(--ink) !important;
+}
+.bg-ice {
+  background-color: rgba(139, 178, 237, 0.08) !important;
+}
+.hover\:bg-ice:hover {
+  background-color: rgba(139, 178, 237, 0.14) !important;
+}
+.hover\:bg-bg-card:hover {
+  background-color: var(--ink-deep) !important;
+}
+.hover\:bg-white:hover {
+  background-color: var(--ink-raised) !important;
+}
+.bg-navy,
+.bg-navy-hover,
+.hover\:bg-navy-hover:hover {
+  background-color: var(--ink-deep) !important;
+  color: var(--fg-100);
+}
+.text-navy,
+.hover\:text-navy:hover {
+  color: var(--fg-100) !important;
+}
+.text-ink {
+  color: var(--fg-72) !important;
+}
+.text-ink-muted {
+  color: var(--fg-52) !important;
+}
+.border-ink-border {
+  border-color: var(--fg-16) !important;
+}
+.hover\:border-navy:hover,
+.hover\:border-ink-border:hover {
+  border-color: var(--fg-32) !important;
+}
+.focus\:border-navy:focus {
+  border-color: var(--frost) !important;
+}
+
+/* Shadows banned in dark mode */
+.shadow,
+.shadow-sm,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl {
+  box-shadow: none !important;
+}
+
+/* ---------------------------------------------------------------------
+   Paper mode — opt-in class for PDF-export paths and doc surfaces
+   --------------------------------------------------------------------- */
+
+.paper-mode {
+  background: var(--paper) !important;
+  color: var(--paper-fg-100) !important;
+}
+.paper-mode * { color: inherit; }
+.paper-mode .bg-white { background-color: var(--paper-raised) !important; }
+.paper-mode .bg-bg-card { background-color: var(--chalk) !important; }
+.paper-mode .bg-bg-page { background-color: var(--paper) !important; }
+.paper-mode .text-navy { color: var(--paper-fg-100) !important; }
+.paper-mode .text-ink { color: var(--paper-fg-68) !important; }
+.paper-mode .text-ink-muted { color: var(--paper-fg-46) !important; }
+.paper-mode .border-ink-border { border-color: var(--paper-fg-14) !important; }
+.paper-mode .section-header { color: var(--paper-fg-46); }
+.paper-mode .kicker { color: var(--paper-fg-46); }
+
+/* ---------------------------------------------------------------------
+   Shell layout helpers
+   --------------------------------------------------------------------- */
+
+.shell {
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding-left: var(--shell-pad);
+  padding-right: var(--shell-pad);
+}

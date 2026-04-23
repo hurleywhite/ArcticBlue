@@ -2,14 +2,21 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { STAGE_LABEL, STAGE_ORDER, formatMeetingWhen, type Account } from "@/lib/content/accounts";
+import { motion } from "framer-motion";
+import {
+  STAGE_LABEL,
+  STAGE_ORDER,
+  formatMeetingWhen,
+  type Account,
+} from "@/lib/content/accounts";
 import { resolveAccounts, useAccountsStore } from "@/lib/state/accounts-store";
+import { EASE, staggerChild, Stagger } from "@/components/motion/primitives";
 
 /*
-  Workbench home client. Reads accounts from the live store (seed +
-  overlays + custom − deleted), offers search + filter, renders a
-  hero next-meeting, an upcoming-this-week strip, and the pipeline
-  by stage.
+  Workbench home client — dark treatment.
+  Hero is the next meeting card (breathing frost-tinted accent); pipeline
+  groups by stage with hover-reveal border glow on cards. Week-ahead
+  strip sits between, with mono timestamp labels and data-pulse dots.
 */
 
 export function WorkbenchHome() {
@@ -17,14 +24,17 @@ export function WorkbenchHome() {
   const accounts = useMemo(() => resolveAccounts(state), [state]);
 
   const [query, setQuery] = useState("");
-  const [stageFilter, setStageFilter] = useState<typeof STAGE_ORDER[number] | "all">("all");
+  const [stageFilter, setStageFilter] = useState<
+    (typeof STAGE_ORDER)[number] | "all"
+  >("all");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return accounts.filter((a) => {
       if (stageFilter !== "all" && a.stage !== stageFilter) return false;
       if (!q) return true;
-      const hay = `${a.company_name} ${a.industry} ${a.poc_name} ${a.poc_title} ${a.domain}`.toLowerCase();
+      const hay =
+        `${a.company_name} ${a.industry} ${a.poc_name} ${a.poc_title} ${a.domain}`.toLowerCase();
       return hay.includes(q);
     });
   }, [accounts, query, stageFilter]);
@@ -35,7 +45,8 @@ export function WorkbenchHome() {
     );
     upcoming.sort(
       (a, b) =>
-        new Date(a.next_meeting!.when).getTime() - new Date(b.next_meeting!.when).getTime()
+        new Date(a.next_meeting!.when).getTime() -
+        new Date(b.next_meeting!.when).getTime()
     );
     return upcoming[0];
   }, [accounts]);
@@ -51,7 +62,8 @@ export function WorkbenchHome() {
       )
       .sort(
         (a, b) =>
-          new Date(a.next_meeting!.when).getTime() - new Date(b.next_meeting!.when).getTime()
+          new Date(a.next_meeting!.when).getTime() -
+          new Date(b.next_meeting!.when).getTime()
       );
   }, [accounts]);
 
@@ -64,58 +76,97 @@ export function WorkbenchHome() {
 
   return (
     <>
-      {nextMeeting && nextMeeting.next_meeting && <NextMeetingCard account={nextMeeting} />}
+      {nextMeeting && nextMeeting.next_meeting && (
+        <NextMeetingCard account={nextMeeting} />
+      )}
 
       {upcomingWeek.length > 1 && (
-        <section className="mt-6">
-          <h2 className="section-header mb-3">This week · {upcomingWeek.length} meetings</h2>
-          <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-3">
-            {upcomingWeek.slice(0, 6).map((a, idx, arr) => (
-              <Link
-                key={a.id}
-                href={`/workbench/accounts/${a.id}`}
-                className={`group block bg-white transition hover:bg-bg-card ${
-                  idx === arr.length - 1 ? "" : "md:border-r md:border-ink-border"
-                } border-b border-ink-border md:border-b-0`}
-              >
-                <div className="px-4 py-3">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
+        <section className="mt-12">
+          <SectionRail label={`This week · ${upcomingWeek.length} meetings`} />
+          <Stagger
+            className="mt-4 grid grid-cols-1 gap-px overflow-hidden md:grid-cols-3"
+            style={{ background: "var(--fg-16)" }}
+          >
+            {upcomingWeek.slice(0, 6).map((a) => (
+              <motion.div key={a.id} variants={staggerChild}>
+                <Link
+                  href={`/workbench/accounts/${a.id}`}
+                  className="group relative flex h-full flex-col gap-3 px-5 py-4"
+                  style={{
+                    background: "var(--ink-raised)",
+                    transition:
+                      "background 200ms cubic-bezier(0.2, 0.7, 0.2, 1)",
+                  }}
+                >
+                  <HoverBorderGlow />
+                  <div className="kicker-sm flex items-center gap-2">
+                    <span className="data-dot" />
                     {formatMeetingWhen(a.next_meeting!.when)}
                   </div>
-                  <div className="mt-0.5 text-[13px] font-bold text-navy">
-                    {a.company_name}
+                  <div>
+                    <div
+                      className="serif text-[18px] leading-[1.2]"
+                      style={{ color: "var(--fg-100)" }}
+                    >
+                      {a.company_name}
+                    </div>
+                    <div
+                      className="mt-1 text-[13px] leading-[1.45]"
+                      style={{ color: "var(--fg-72)" }}
+                    >
+                      {a.next_meeting!.title}
+                    </div>
                   </div>
-                  <div className="mt-0.5 text-[12px] text-ink">{a.next_meeting!.title}</div>
-                  <div className="mt-1 text-[11px] text-ink-muted">
+                  <div
+                    className="mt-auto font-mono text-[10px] uppercase tracking-[0.16em]"
+                    style={{ color: "var(--fg-52)" }}
+                  >
                     {a.poc_name} · {a.poc_title}
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             ))}
-          </div>
+          </Stagger>
         </section>
       )}
 
-      <section className="mt-10">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="section-header mb-0">
-            Pipeline · {accounts.length} account{accounts.length === 1 ? "" : "s"}
-          </h2>
+      <section className="mt-16">
+        <div className="flex items-end justify-between">
+          <SectionRail
+            label={`Pipeline · ${accounts.length} account${
+              accounts.length === 1 ? "" : "s"
+            }`}
+          />
+          <Link
+            href="/workbench/accounts/new"
+            className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em]"
+            style={{ color: "var(--frost)" }}
+          >
+            + New account
+          </Link>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2 border border-ink-border bg-bg-card px-4 py-3">
+        <div
+          className="mt-4 flex flex-wrap items-center gap-2 px-4 py-3"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            borderRadius: 2,
+          }}
+        >
           <input
             type="search"
-            placeholder="Search by company, POC, industry, or domain"
+            placeholder="Search company, POC, industry, or domain"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="input"
-            style={{ maxWidth: 360 }}
+            style={{ maxWidth: 360, background: "var(--ink-deep)" }}
           />
-          <span className="mx-2 h-4 w-px bg-ink-border" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
-            Stage
-          </span>
+          <span
+            className="mx-1 h-4 w-px"
+            style={{ background: "var(--fg-16)" }}
+          />
+          <span className="kicker-sm">Stage</span>
           <StageChip active={stageFilter === "all"} onClick={() => setStageFilter("all")}>
             All
           </StageChip>
@@ -123,7 +174,11 @@ export function WorkbenchHome() {
             const count = accounts.filter((a) => a.stage === s).length;
             if (count === 0) return null;
             return (
-              <StageChip key={s} active={stageFilter === s} onClick={() => setStageFilter(s)}>
+              <StageChip
+                key={s}
+                active={stageFilter === s}
+                onClick={() => setStageFilter(s)}
+              >
                 {STAGE_LABEL[s]} · {count}
               </StageChip>
             );
@@ -134,7 +189,8 @@ export function WorkbenchHome() {
                 setQuery("");
                 setStageFilter("all");
               }}
-              className="ml-auto text-[10px] font-bold uppercase tracking-[0.12em] text-navy hover:underline"
+              className="ml-auto font-mono text-[10px] uppercase tracking-[0.18em]"
+              style={{ color: "var(--frost)" }}
             >
               Clear
             </button>
@@ -142,22 +198,44 @@ export function WorkbenchHome() {
         </div>
 
         {filtered.length === 0 && (
-          <div className="mt-3 border border-ink-border bg-white px-5 py-6 text-center italic text-ink-muted">
-            No accounts match the filters.
+          <div
+            className="mt-4 px-5 py-8 text-center"
+            style={{
+              background: "var(--ink-raised)",
+              border: "1px solid var(--fg-16)",
+              borderRadius: 2,
+              color: "var(--fg-52)",
+            }}
+          >
+            <span className="italic">No accounts match the filters.</span>
           </div>
         )}
 
-        <div className="mt-4 space-y-6">
+        <div className="mt-6 space-y-10">
           {byStage.map(({ stage, accounts: stageAccounts }) => (
             <div key={stage}>
-              <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-navy">
-                {STAGE_LABEL[stage]} · {stageAccounts.length}
+              <div
+                className="mb-3 flex items-center gap-3"
+                style={{ color: "var(--fg-52)" }}
+              >
+                <span className="kicker-sm">{STAGE_LABEL[stage]}</span>
+                <span style={{ color: "var(--fg-32)" }}>·</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em]">
+                  {stageAccounts.length}
+                </span>
+                <span
+                  className="ml-1 h-px flex-1"
+                  style={{ background: "var(--fg-16)" }}
+                />
               </div>
-              <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-2 lg:grid-cols-3">
-                {stageAccounts.map((a, idx) => (
-                  <AccountCard key={a.id} account={a} idx={idx} total={stageAccounts.length} />
+              <Stagger
+                className="grid grid-cols-1 gap-px overflow-hidden md:grid-cols-2 lg:grid-cols-3"
+                style={{ background: "var(--fg-16)" }}
+              >
+                {stageAccounts.map((a) => (
+                  <AccountCard key={a.id} account={a} />
                 ))}
-              </div>
+              </Stagger>
             </div>
           ))}
         </div>
@@ -169,88 +247,183 @@ export function WorkbenchHome() {
 function NextMeetingCard({ account }: { account: Account }) {
   const nm = account.next_meeting!;
   return (
-    <section className="mt-6">
-      <div className="border border-navy">
-        <div className="flex flex-col gap-3 bg-navy px-6 py-4 text-white md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] opacity-80">
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: EASE }}
+      className="mt-12"
+    >
+      <div
+        className="relative overflow-hidden rounded-[4px]"
+        style={{
+          background: "var(--ink-raised)",
+          border: "1px solid var(--fg-16)",
+        }}
+      >
+        <span
+          className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full opacity-40"
+          style={{
+            background:
+              "radial-gradient(circle, var(--frost) 0%, transparent 70%)",
+            filter: "blur(40px)",
+          }}
+        />
+        <div className="relative grid grid-cols-1 gap-0 md:grid-cols-[1fr_260px]">
+          <div
+            className="flex flex-col gap-4 p-8"
+            style={{ borderRight: "1px solid var(--fg-16)" }}
+          >
+            <div className="kicker flex items-center gap-2">
+              <span
+                className="data-dot"
+                style={{ background: "var(--amber)" }}
+                aria-hidden
+              />
               Next meeting · {formatMeetingWhen(nm.when)}
             </div>
-            <div className="mt-0.5 text-[18px] font-bold leading-[1.15]">{nm.title}</div>
-            <div className="mt-0.5 text-[12px] opacity-80">
-              {account.company_name} · {account.poc_name} ({account.poc_title})
+            <h2
+              className="serif-tight text-[32px] leading-[1.1] md:text-[36px]"
+              style={{ color: "var(--fg-100)" }}
+            >
+              {nm.title}
+            </h2>
+            <div
+              className="font-mono text-[11px] uppercase tracking-[0.16em]"
+              style={{ color: "var(--fg-52)" }}
+            >
+              {account.company_name} · {account.poc_name} · {account.poc_title}
+            </div>
+            <div className="mt-2">
+              <div className="kicker-sm mb-2">Notes</div>
+              <p
+                className="text-[14px] leading-[1.65]"
+                style={{ color: "var(--fg-72)" }}
+              >
+                {account.notes}
+              </p>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link
+                href={`/workbench/accounts/${account.id}`}
+                className="btn-primary"
+              >
+                Open meeting →
+              </Link>
+              <span className="kicker-sm">
+                {STAGE_LABEL[account.stage]}
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="border border-white/40 bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]">
-              {STAGE_LABEL[account.stage]}
-            </span>
-            <Link
-              href={`/workbench/accounts/${account.id}`}
-              className="border border-white bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-navy hover:bg-ice"
-            >
-              Open meeting →
-            </Link>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-0 bg-white md:grid-cols-[1fr_240px]">
-          <div className="border-b border-ink-border px-6 py-5 md:border-b-0 md:border-r">
-            <h3 className="section-header mb-2">Notes</h3>
-            <p className="text-[13px] leading-[1.6]">{account.notes}</p>
-          </div>
-          <div className="px-5 py-4">
-            <h3 className="section-header mb-2">Attendees</h3>
-            <ul className="m-0 list-none space-y-1 p-0 text-[12px]">
+          <div className="p-6">
+            <div className="kicker-sm mb-3">Attendees</div>
+            <ul className="m-0 list-none space-y-2 p-0">
               {nm.attendees.map((a) => (
-                <li key={a} className="border-b border-ink-border pb-1 last:border-b-0">
+                <li
+                  key={a}
+                  className="border-b pb-2 text-[13px] last:border-b-0"
+                  style={{
+                    borderBottomColor: "var(--fg-16)",
+                    color: "var(--fg-100)",
+                  }}
+                >
                   {a}
                 </li>
               ))}
             </ul>
-            <div className="mt-3 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
+            <div className="mt-4 kicker-sm">
               {nm.location} · {nm.duration_minutes} min
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
-function AccountCard({ account, idx, total }: { account: Account; idx: number; total: number }) {
-  const lastItem = idx === total - 1;
+function AccountCard({ account }: { account: Account }) {
   return (
-    <Link
-      href={`/workbench/accounts/${account.id}`}
-      className={`group block bg-white transition hover:bg-bg-card ${
-        lastItem ? "" : "md:border-r md:border-ink-border"
-      } border-b border-ink-border lg:border-b-0`}
-    >
-      <div className="px-5 py-4">
-        <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
-          {account.company_name}
+    <motion.div variants={staggerChild}>
+      <Link
+        href={`/workbench/accounts/${account.id}`}
+        className="group relative flex h-full flex-col gap-4 px-5 py-5"
+        style={{
+          background: "var(--ink-raised)",
+          transition: "background 200ms cubic-bezier(0.2, 0.7, 0.2, 1)",
+        }}
+      >
+        <HoverBorderGlow />
+        <div className="kicker-sm">{account.industry}</div>
+        <div>
+          <div
+            className="serif text-[20px] leading-[1.15]"
+            style={{ color: "var(--fg-100)" }}
+          >
+            {account.company_name}
+          </div>
+          <div
+            className="mt-2 text-[13px]"
+            style={{ color: "var(--fg-72)" }}
+          >
+            {account.poc_name}
+            <span style={{ color: "var(--fg-32)" }}> · </span>
+            {account.poc_title}
+          </div>
         </div>
-        <div className="mt-0.5 text-[10px] text-ink-muted">{account.industry}</div>
-        <div className="mt-3 text-[13px] font-bold text-navy">{account.poc_name}</div>
-        <div className="text-[11px] text-ink-muted">{account.poc_title}</div>
         {account.next_meeting && (
-          <div className="mt-3 border-t border-ink-border pt-2">
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
+          <div
+            className="mt-auto border-t pt-3"
+            style={{ borderTopColor: "var(--fg-16)" }}
+          >
+            <div className="kicker-sm flex items-center gap-2">
+              <span
+                className="data-dot"
+                style={{ background: "var(--frost)" }}
+              />
               {formatMeetingWhen(account.next_meeting.when)}
             </div>
-            <div className="mt-0.5 text-[11px] text-ink">{account.next_meeting.title}</div>
+            <div
+              className="mt-1 text-[12px]"
+              style={{ color: "var(--fg-72)" }}
+            >
+              {account.next_meeting.title}
+            </div>
           </div>
         )}
-        <div className="mt-3 flex items-center justify-between border-t border-ink-border pt-2">
-          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
-            Updated {relativeTime(account.updated_at)}
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-navy group-hover:underline">
-            Open →
+        <div
+          className="mt-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.16em]"
+          style={{ color: "var(--fg-52)" }}
+        >
+          <span>Updated {relativeTime(account.updated_at)}</span>
+          <span
+            className="transition-transform duration-200 group-hover:translate-x-0.5"
+            style={{ color: "var(--frost)" }}
+          >
+            →
           </span>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </motion.div>
+  );
+}
+
+function SectionRail({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="kicker">{label}</span>
+      <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+    </div>
+  );
+}
+
+function HoverBorderGlow() {
+  return (
+    <span
+      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-250 group-hover:opacity-100"
+      style={{
+        boxShadow: "inset 0 0 0 1px var(--frost-glow)",
+        transitionTimingFunction: "cubic-bezier(0.2, 0.7, 0.2, 1)",
+      }}
+    />
   );
 }
 
@@ -264,21 +437,15 @@ function StageChip({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={
-        active
-          ? "border border-navy bg-navy px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white"
-          : "border border-ink-border bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-navy hover:border-navy"
-      }
-    >
+    <button onClick={onClick} className={`chip ${active ? "active" : ""}`}>
       {children}
     </button>
   );
 }
 
 function relativeTime(iso: string): string {
-  const diffHours = (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60);
+  const diffHours =
+    (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60);
   if (diffHours < 1) return "just now";
   if (diffHours < 24) return `${Math.round(diffHours)}h ago`;
   const days = Math.round(diffHours / 24);

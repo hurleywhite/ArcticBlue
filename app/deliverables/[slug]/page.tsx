@@ -28,17 +28,20 @@ export default async function DeliverablePage({
   if (!def) notFound();
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-8">
+    <div className="shell pb-32">
       <PageHeader
         kicker={`Deliverables · ${def.category}`}
         title={def.title}
+        description={def.summary}
         right={
-          <Link href="/deliverables" className="btn-secondary inline-block bg-white">
+          <Link href="/deliverables" className="btn-secondary">
             ← All deliverables
           </Link>
         }
       />
-      <DeliverableWorkflow def={def} />
+      <div className="mt-12">
+        <DeliverableWorkflow def={def} />
+      </div>
     </div>
   );
 }

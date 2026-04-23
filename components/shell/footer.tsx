@@ -1,32 +1,40 @@
 /*
-  Footer: muted gray, middle-dot separators, tight type.
-  Matches the ArcticBrief footer treatment — arcticblue.ai as a
-  plain-text signoff, not a logo lockup.
+  Footer — mono metadata, middle-dot separators, low opacity. Matches
+  the Bloomberg-Terminal-texture feel: data + timestamp + provenance.
 */
 
 export function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="border-t border-ink-border">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-6 py-5 text-[12px] text-ink-muted sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          ArcticMind · Continuous AI enablement · © {year} ArcticBlue AI
+    <footer
+      className="mt-auto border-t"
+      style={{ borderTopColor: "var(--fg-16)" }}
+    >
+      <div className="shell flex flex-col gap-2 py-6 font-mono text-[10px] uppercase tracking-[0.18em] sm:flex-row sm:items-center sm:justify-between">
+        <div style={{ color: "var(--fg-52)" }}>
+          ArcticMind · ArcticBlue AI · © {year}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4" style={{ color: "var(--fg-52)" }}>
           <a
             href="https://arcticblue.ai"
-            className="hover:text-navy"
             target="_blank"
             rel="noreferrer"
+            className="transition-colors hover:text-[color:var(--fg-100)]"
           >
             arcticblue.ai
           </a>
-          <span>·</span>
-          <a href="/privacy" className="hover:text-navy">
+          <span style={{ color: "var(--fg-16)" }}>·</span>
+          <a
+            href="/privacy"
+            className="transition-colors hover:text-[color:var(--fg-100)]"
+          >
             Privacy
           </a>
-          <span>·</span>
-          <a href="/terms" className="hover:text-navy">
+          <span style={{ color: "var(--fg-16)" }}>·</span>
+          <a
+            href="/terms"
+            className="transition-colors hover:text-[color:var(--fg-100)]"
+          >
             Terms
           </a>
         </div>

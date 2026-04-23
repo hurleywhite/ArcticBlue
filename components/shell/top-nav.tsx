@@ -1,12 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 
 /*
-  Top nav — sales-team framing.
-
-  Three primary surfaces plus admin. Workbench is the daily home:
-  pipeline, meeting prep, drafting. Showcase is the in-meeting demo
-  surface (present mode lives here). Library is the reference shelf
-  the team cites into proposals.
+  Top nav — ink-deep band, sticky, glass blur.
+  Active item carries a frost underline that slides between items
+  (Linear-style physics). Hover lifts show a thin paper underline.
 */
 
 const PRIMARY: Array<{ label: string; href: string }> = [
@@ -22,35 +23,117 @@ const SECONDARY: Array<{ label: string; href: string }> = [
 ];
 
 export function TopNav() {
+  const pathname = usePathname() ?? "/";
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(href + "/");
+  };
+
   return (
-    <header className="bg-navy text-white">
-      <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-3">
+    <header
+      className="sticky top-0 z-30 border-b backdrop-blur-xl"
+      style={{
+        background: "rgba(6, 15, 34, 0.72)",
+        borderBottomColor: "var(--fg-16)",
+      }}
+    >
+      <div className="shell flex items-center justify-between py-4">
         <Link href="/" className="flex items-baseline gap-3">
-          <span className="text-[15px] font-bold tracking-[0.04em]">ArcticMind</span>
-          <span className="text-[10px] uppercase tracking-[0.2em] opacity-70">Sales workbench</span>
+          <span className="flex items-center gap-2">
+            <LogoMark />
+            <span className="serif-tight text-[20px] leading-none text-[color:var(--fg-100)]">
+              ArcticMind
+            </span>
+          </span>
+          <span className="kicker-sm hidden md:inline">by ArcticBlue</span>
         </Link>
+
         <nav className="flex items-center gap-1">
           {PRIMARY.map((item) => (
-            <Link
+            <NavItem
               key={item.href}
               href={item.href}
-              className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition hover:bg-white/10"
-            >
-              {item.label}
-            </Link>
+              label={item.label}
+              active={isActive(item.href)}
+            />
           ))}
-          <span className="mx-2 h-4 w-px bg-white/20" />
+          <span
+            className="mx-2 h-4 w-px"
+            style={{ background: "var(--fg-16)" }}
+          />
           {SECONDARY.map((item) => (
-            <Link
+            <NavItem
               key={item.href}
               href={item.href}
-              className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] opacity-80 transition hover:bg-white/10 hover:opacity-100"
-            >
-              {item.label}
-            </Link>
+              label={item.label}
+              active={isActive(item.href)}
+              muted
+            />
           ))}
         </nav>
       </div>
     </header>
+  );
+}
+
+function NavItem({
+  href,
+  label,
+  active,
+  muted,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <Link href={href} className="group relative block">
+      <span
+        className="block px-3 py-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] transition-colors duration-200"
+        style={{
+          color: active
+            ? "var(--fg-100)"
+            : muted
+              ? "var(--fg-52)"
+              : "var(--fg-72)",
+          transitionTimingFunction: "cubic-bezier(0.2, 0.7, 0.2, 1)",
+        }}
+      >
+        {label}
+      </span>
+      {active && (
+        <motion.span
+          layoutId="nav-underline"
+          className="absolute bottom-0 left-2 right-2 h-[1px]"
+          style={{ background: "var(--frost)" }}
+          transition={{ type: "spring", stiffness: 260, damping: 30 }}
+        />
+      )}
+    </Link>
+  );
+}
+
+function LogoMark() {
+  return (
+    <span className="relative inline-flex h-5 w-5 items-center justify-center">
+      <span
+        className="absolute inset-0 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, var(--frost) 0%, transparent 72%)",
+          opacity: 0.4,
+        }}
+      />
+      <span
+        className="relative h-2 w-2 rounded-full"
+        style={{ background: "var(--frost)" }}
+      />
+      <span
+        className="absolute inset-0 rounded-full border"
+        style={{ borderColor: "var(--fg-32)" }}
+      />
+    </span>
   );
 }
