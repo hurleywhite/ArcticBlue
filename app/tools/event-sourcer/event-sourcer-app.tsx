@@ -72,6 +72,8 @@ export function EventSourcerApp() {
   const [hydrated, setHydrated] = useState(false);
   const [presetId, setPresetId] = useState<string>("");
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [customizingPartner, setCustomizingPartner] = useState(true);
   const [viewMode, setViewMode] = useState<"cards" | "markdown">("cards");
   const outputRef = useRef<HTMLDivElement | null>(null);
 
@@ -106,6 +108,10 @@ export function EventSourcerApp() {
 
   const applyPreset = (id: string) => {
     setPresetId(id);
+    if (id === "") {
+      setCustomizingPartner(true);
+      return;
+    }
     const p = findPreset(id);
     if (!p) return;
     setInputs((prev) => ({
@@ -121,6 +127,7 @@ export function EventSourcerApp() {
           ? String(p.haloCapPercent)
           : prev.haloCapPercent,
     }));
+    setCustomizingPartner(false);
   };
 
   const resetForm = () => {
@@ -275,40 +282,21 @@ export function EventSourcerApp() {
     });
   }, [inputs, requiredOk]);
 
+  const selectedPreset = findPreset(presetId);
+
   return (
     <div>
-      <div className="callout">
-        <p>
-          Partner inputs below augment the base system prompt. Required
-          fields have a frost accent; everything else refines the run.
-          Google Calendar and tracker-doc lookups are stubbed out until
-          those integrations land.
-        </p>
-      </div>
-
-      <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,520px)_1fr]">
+      <div className="mt-2 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,480px)_1fr]">
         {/* Left: form */}
         <div>
-          <div className="flex items-center gap-3">
+          {/* Preset row */}
+          <div className="flex flex-wrap items-center gap-2">
             <span className="kicker">Partner</span>
-            <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
-            <button
-              type="button"
-              onClick={resetForm}
-              className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
-              style={{ color: "var(--fg-52)" }}
-            >
-              Reset
-            </button>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="kicker-sm">Preset</span>
             <button
               type="button"
               className="chip"
               data-active={presetId === ""}
-              onClick={() => setPresetId("")}
+              onClick={() => applyPreset("")}
               disabled={running}
             >
               Blank
@@ -325,63 +313,118 @@ export function EventSourcerApp() {
                 {p.label}
               </button>
             ))}
+            <span className="ml-auto flex items-center gap-3">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+                style={{ color: "var(--fg-52)" }}
+              >
+                Reset
+              </button>
+            </span>
           </div>
-          <FieldGrid>
-            <Field label="Partner name" required>
-              <input
-                className="input"
-                value={inputs.partnerName}
-                onChange={(e) => set("partnerName", e.target.value)}
-                placeholder="e.g. Thor Ernstsson"
-                disabled={running}
-              />
-            </Field>
-            <Field label="Home base" hint="Used for travel burden tagging.">
-              <input
-                className="input"
-                value={inputs.partnerHomeBase}
-                onChange={(e) => set("partnerHomeBase", e.target.value)}
-                placeholder="e.g. Brooklyn, NY"
-                disabled={running}
-              />
-            </Field>
-            <Field label="Focus" required hint="1–2 sentences.">
-              <textarea
-                className="textarea"
-                rows={3}
-                value={inputs.partnerFocus}
-                onChange={(e) => set("partnerFocus", e.target.value)}
-                placeholder="Enterprise AI adoption in regulated industries. Speaking engagements reaching CIO / CAIO audiences."
-                disabled={running}
-              />
-            </Field>
-            <Field label="Audience targets" required>
-              <input
-                className="input"
-                value={inputs.audienceTargets}
-                onChange={(e) => set("audienceTargets", e.target.value)}
-                placeholder="CIO, CAIO, Chief Data Officer, VP AI Strategy"
-                disabled={running}
-              />
-            </Field>
-            <Field label="Theme targets" required hint="3–6 themes, comma-separated.">
-              <textarea
-                className="textarea"
-                rows={2}
-                value={inputs.themeTargets}
-                onChange={(e) => set("themeTargets", e.target.value)}
-                placeholder="enterprise AI rollout, governance, agentic workflows, data foundations, measurable ROI"
-                disabled={running}
-              />
-            </Field>
-          </FieldGrid>
 
-          <div className="mt-10 flex items-center gap-3">
+          {/* Partner details — compact summary when a preset is picked,
+              editable fields when Blank or user clicks Customize. */}
+          {selectedPreset && !customizingPartner ? (
+            <div
+              className="mt-4 flex items-start gap-4 px-5 py-4"
+              style={{
+                background: "var(--ink-raised)",
+                border: "1px solid var(--fg-16)",
+                borderRadius: 2,
+              }}
+            >
+              <div className="flex-1 min-w-0">
+                <div
+                  className="serif text-[16px] leading-[1.2]"
+                  style={{ color: "var(--fg-100)" }}
+                >
+                  {inputs.partnerName || selectedPreset.label}
+                </div>
+                <p
+                  className="mt-1.5 text-[12.5px] leading-[1.55]"
+                  style={{ color: "var(--fg-72)" }}
+                >
+                  {inputs.partnerFocus || selectedPreset.focus}
+                </p>
+                <div
+                  className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em]"
+                  style={{ color: "var(--fg-52)" }}
+                >
+                  {inputs.audienceTargets.split(",").slice(0, 4).join(" · ")}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCustomizingPartner(true)}
+                className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+                style={{ color: "var(--frost)" }}
+                disabled={running}
+              >
+                Edit →
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4 flex flex-col gap-4">
+              <Field label="Partner name" required>
+                <input
+                  className="input"
+                  value={inputs.partnerName}
+                  onChange={(e) => set("partnerName", e.target.value)}
+                  placeholder="e.g. Thor Ernstsson"
+                  disabled={running}
+                />
+              </Field>
+              <Field label="Focus" required>
+                <textarea
+                  className="textarea"
+                  rows={2}
+                  value={inputs.partnerFocus}
+                  onChange={(e) => set("partnerFocus", e.target.value)}
+                  placeholder="Enterprise AI adoption in regulated industries. Speaking engagements reaching CIO / CAIO audiences."
+                  disabled={running}
+                />
+              </Field>
+              <Field label="Audience" required>
+                <input
+                  className="input"
+                  value={inputs.audienceTargets}
+                  onChange={(e) => set("audienceTargets", e.target.value)}
+                  placeholder="CIO, CAIO, Chief Data Officer"
+                  disabled={running}
+                />
+              </Field>
+              <Field label="Themes" required>
+                <input
+                  className="input"
+                  value={inputs.themeTargets}
+                  onChange={(e) => set("themeTargets", e.target.value)}
+                  placeholder="enterprise AI rollout, governance, agentic workflows, measurable ROI"
+                  disabled={running}
+                />
+              </Field>
+              {selectedPreset && customizingPartner && (
+                <button
+                  type="button"
+                  onClick={() => setCustomizingPartner(false)}
+                  className="self-start font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+                  style={{ color: "var(--fg-52)" }}
+                >
+                  ← Collapse
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Window — dates + region on one row */}
+          <div className="mt-8 flex items-center gap-3">
             <span className="kicker">Window</span>
             <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
           </div>
-          <FieldGrid>
-            <Field label="Start date" required>
+          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-[1fr_1fr_180px]">
+            <Field label="From" required tight>
               <input
                 type="date"
                 className="input"
@@ -390,7 +433,7 @@ export function EventSourcerApp() {
                 disabled={running}
               />
             </Field>
-            <Field label="End date" required>
+            <Field label="To" required tight>
               <input
                 type="date"
                 className="input"
@@ -399,7 +442,7 @@ export function EventSourcerApp() {
                 disabled={running}
               />
             </Field>
-            <Field label="Regional scope">
+            <Field label="Region" tight>
               <select
                 className="select"
                 value={inputs.regionalScope}
@@ -415,87 +458,101 @@ export function EventSourcerApp() {
                 <option>EMEA only</option>
               </select>
             </Field>
-          </FieldGrid>
-
-          <div className="mt-10 flex items-center gap-3">
-            <span className="kicker">Refine (optional)</span>
-            <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
           </div>
-          <FieldGrid>
-            <Field label="Industry" hint="Narrow the sourcing queries.">
-              <input
-                className="input"
-                value={inputs.industry}
-                onChange={(e) => set("industry", e.target.value)}
-                placeholder="e.g. Financial services, Healthcare, Industrials"
-                disabled={running}
-              />
-            </Field>
-            <Field
-              label="Event count"
-              hint="Pick a specific number or a range. Default 15."
+
+          {/* More options disclosure — industry, count, halo, home base, seeds */}
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((s) => !s)}
+              className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+              style={{ color: "var(--frost)" }}
+              disabled={running}
             >
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  className="input"
-                  value={inputs.eventCountMin}
-                  onChange={(e) => set("eventCountMin", e.target.value)}
-                  placeholder="min"
-                  min={1}
-                  max={50}
-                  style={{ width: "80px" }}
-                  disabled={running}
-                />
-                <span
-                  className="font-mono text-[10px] uppercase tracking-[0.16em]"
-                  style={{ color: "var(--fg-52)" }}
+              {showAdvanced ? "− Fewer options" : "+ More options"}
+            </button>
+
+            {showAdvanced && (
+              <div className="mt-4 flex flex-col gap-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_180px_140px]">
+                  <Field label="Industry" tight>
+                    <input
+                      className="input"
+                      value={inputs.industry}
+                      onChange={(e) => set("industry", e.target.value)}
+                      placeholder="Financial services, Healthcare…"
+                      disabled={running}
+                    />
+                  </Field>
+                  <Field label="Count (min–max)" tight>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        className="input"
+                        value={inputs.eventCountMin}
+                        onChange={(e) => set("eventCountMin", e.target.value)}
+                        placeholder="min"
+                        min={1}
+                        max={50}
+                        disabled={running}
+                      />
+                      <span
+                        className="font-mono text-[10px]"
+                        style={{ color: "var(--fg-52)" }}
+                      >
+                        –
+                      </span>
+                      <input
+                        type="number"
+                        className="input"
+                        value={inputs.eventCountMax}
+                        onChange={(e) => set("eventCountMax", e.target.value)}
+                        placeholder="max"
+                        min={1}
+                        max={50}
+                        disabled={running}
+                      />
+                    </div>
+                  </Field>
+                  <Field label="Halo %" tight>
+                    <input
+                      type="number"
+                      className="input"
+                      value={inputs.haloCapPercent}
+                      onChange={(e) => set("haloCapPercent", e.target.value)}
+                      placeholder="10"
+                      min={0}
+                      max={40}
+                      disabled={running}
+                    />
+                  </Field>
+                </div>
+                <Field label="Home base" tight hint="Sets travel-burden tagging.">
+                  <input
+                    className="input"
+                    value={inputs.partnerHomeBase}
+                    onChange={(e) => set("partnerHomeBase", e.target.value)}
+                    placeholder="e.g. Brooklyn, NY"
+                    disabled={running}
+                  />
+                </Field>
+                <Field
+                  label="Seed events"
+                  tight
+                  hint="Partner's existing tracker — checked, not re-proposed."
                 >
-                  to
-                </span>
-                <input
-                  type="number"
-                  className="input"
-                  value={inputs.eventCountMax}
-                  onChange={(e) => set("eventCountMax", e.target.value)}
-                  placeholder="max"
-                  min={1}
-                  max={50}
-                  style={{ width: "80px" }}
-                  disabled={running}
-                />
+                  <textarea
+                    className="textarea"
+                    rows={2}
+                    value={inputs.seedEvents}
+                    onChange={(e) => set("seedEvents", e.target.value)}
+                    placeholder="e.g. AWS re:Invent 2026; Gartner CIO Leadership Forum"
+                    disabled={running}
+                  />
+                </Field>
               </div>
-            </Field>
-            <Field
-              label="Halo event cap"
-              hint="% of list reserved for LEAP / TEDx / high-prestige summits. 0 for sponsorship-only."
-            >
-              <input
-                type="number"
-                className="input"
-                value={inputs.haloCapPercent}
-                onChange={(e) => set("haloCapPercent", e.target.value)}
-                placeholder="default 10"
-                min={0}
-                max={40}
-                style={{ width: "120px" }}
-                disabled={running}
-              />
-            </Field>
-            <Field
-              label="Seed events"
-              hint="Events the partner already tracks — flag for in-window status, don't re-propose."
-            >
-              <textarea
-                className="textarea"
-                rows={2}
-                value={inputs.seedEvents}
-                onChange={(e) => set("seedEvents", e.target.value)}
-                placeholder="e.g. AWS re:Invent 2026; Gartner CIO Leadership Forum"
-                disabled={running}
-              />
-            </Field>
-          </FieldGrid>
+            )}
+          </div>
 
           {requiredOk && (
             <div className="mt-8">
@@ -684,24 +741,22 @@ export function EventSourcerApp() {
   );
 }
 
-function FieldGrid({ children }: { children: React.ReactNode }) {
-  return <div className="mt-4 flex flex-col gap-5">{children}</div>;
-}
-
 function Field({
   label,
   hint,
   required,
+  tight,
   children,
 }: {
   label: string;
   hint?: string;
   required?: boolean;
+  tight?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <label className="block">
-      <div className="mb-1.5 flex items-center gap-2">
+      <div className={`flex items-center gap-2 ${tight ? "mb-1" : "mb-1.5"}`}>
         <span
           className="font-mono text-[10px] font-medium uppercase tracking-[0.16em]"
           style={{ color: required ? "var(--frost)" : "var(--fg-52)" }}
@@ -709,19 +764,24 @@ function Field({
           {label}
           {required && <span style={{ marginLeft: 4 }}>·</span>}
           {required && (
-            <span
-              style={{ color: "var(--frost)", marginLeft: 4 }}
-              aria-label="required"
-            >
+            <span style={{ color: "var(--frost)", marginLeft: 4 }}>
               required
             </span>
           )}
         </span>
       </div>
       {children}
-      {hint && (
+      {hint && !tight && (
         <div
           className="mt-1.5 text-[11px] leading-[1.5]"
+          style={{ color: "var(--fg-52)" }}
+        >
+          {hint}
+        </div>
+      )}
+      {hint && tight && (
+        <div
+          className="mt-1 text-[10.5px] leading-[1.4]"
           style={{ color: "var(--fg-52)" }}
         >
           {hint}
