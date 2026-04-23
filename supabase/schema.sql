@@ -85,6 +85,65 @@ create table if not exists canvas_stars (
   unique (session_id, opportunity_id)
 );
 
+-- ═══ practical labs (the spine) ═══════════════════════════════════════════════
+-- Labs are the monthly live sessions ArcticBlue runs for client teams. Every
+-- engagement produces one Lab per month per org. The app's dashboard opens
+-- with this month's Lab; past Labs are the timeline that makes the snowball
+-- visible.
+
+create type lab_status as enum ('upcoming','in_progress','completed','canceled');
+
+create table if not exists labs (
+  id               uuid primary key default gen_random_uuid(),
+  organization_id  uuid references organizations(id) on delete cascade,
+  month            date not null,                 -- first day of the month; unique per org+month
+  title            text not null,                 -- e.g. "Synthesize customer interviews with AI"
+  challenge_brief  text not null,                 -- what the team is actually working on this session
+  pre_work_markdown text,                         -- links / modules to do before the session
+  session_datetime timestamptz,                   -- actual calendar time
+  session_duration_minutes int not null default 90,
+  meeting_url      text,                          -- zoom / teams / etc.
+  facilitator_name text,
+  facilitator_bio  text,
+  status           lab_status not null default 'upcoming',
+  recap_markdown   text,                          -- post-session recap written by the facilitator
+  created_at       timestamptz not null default now(),
+  last_updated_at  timestamptz not null default now(),
+  unique (organization_id, month)
+);
+create index if not exists labs_org_month_idx on labs(organization_id, month desc);
+
+-- Who RSVP'd / attended. rsvp is the respondent's reply; attended is set by
+-- the facilitator after the session.
+create type lab_rsvp_state as enum ('going','maybe','declined','no_response');
+
+create table if not exists lab_attendance (
+  id           uuid primary key default gen_random_uuid(),
+  lab_id       uuid not null references labs(id) on delete cascade,
+  user_id      uuid not null references users(id) on delete cascade,
+  rsvp         lab_rsvp_state not null default 'no_response',
+  attended     boolean,                           -- null until facilitator fills it in
+  updated_at   timestamptz not null default now(),
+  unique (lab_id, user_id)
+);
+create index if not exists lab_attendance_lab_idx on lab_attendance(lab_id);
+
+-- Post-session artifacts. Each participant can drop in what they built during
+-- or after the session — a drafted brief, an analysis, a prompt they want to
+-- share with the team. shared_to_team is the team-wide visibility flag.
+create table if not exists lab_artifacts (
+  id               uuid primary key default gen_random_uuid(),
+  lab_id           uuid not null references labs(id) on delete cascade,
+  user_id          uuid not null references users(id) on delete cascade,
+  title            text not null,
+  content_markdown text not null,
+  shared_to_team   boolean not null default false,
+  created_at       timestamptz not null default now(),
+  last_updated_at  timestamptz not null default now()
+);
+create index if not exists lab_artifacts_lab_idx on lab_artifacts(lab_id);
+create index if not exists lab_artifacts_user_idx on lab_artifacts(user_id);
+
 -- ═══ learning hub ════════════════════════════════════════════════════════════
 
 create type module_type as enum ('video','reading','exercise','live_workshop','curated_external');
@@ -280,6 +339,9 @@ alter table practice_sessions enable row level security;
 alter table practice_messages enable row level security;
 alter table content_tags enable row level security;
 alter table user_events enable row level security;
+alter table labs enable row level security;
+alter table lab_attendance enable row level security;
+alter table lab_artifacts enable row level security;
 
 -- Helper: is_admin — true when the calling user has is_admin_arcticblue = true.
 -- The service role bypasses RLS automatically; this is for the anon/authenticated path.
@@ -373,3 +435,35 @@ create policy "collections readable"
   on collections for select using (is_published = true or is_admin_arcticblue());
 create policy "collection_modules readable"
   on collection_modules for select using (true);
+
+-- Labs: readable by any user in the same org (or admins). Writes by admins only.
+create policy "labs readable by org members"
+  on labs for select using (
+    organization_id = (select organization_id from users where clerk_user_id = auth.jwt() ->> 'sub')
+    or is_admin_arcticblue()
+  );
+create policy "admin writes labs" on labs for all using (is_admin_arcticblue()) with check (is_admin_arcticblue());
+
+-- Lab attendance: users see + mutate their own rows; admins see/mutate all
+create policy "own lab attendance"
+  on lab_attendance for all
+  using (user_id = current_user_id() or is_admin_arcticblue())
+  with check (user_id = current_user_id() or is_admin_arcticblue());
+
+-- Lab artifacts: user owns their artifacts. Shared artifacts visible to org.
+create policy "lab artifacts readable"
+  on lab_artifacts for select using (
+    user_id = current_user_id()
+    or (
+      shared_to_team = true and exists (
+        select 1 from labs l
+        where l.id = lab_id
+          and l.organization_id = (select organization_id from users where clerk_user_id = auth.jwt() ->> 'sub')
+      )
+    )
+    or is_admin_arcticblue()
+  );
+create policy "own lab artifacts writes"
+  on lab_artifacts for all
+  using (user_id = current_user_id() or is_admin_arcticblue())
+  with check (user_id = current_user_id() or is_admin_arcticblue());
