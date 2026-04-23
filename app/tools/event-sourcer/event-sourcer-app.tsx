@@ -36,6 +36,7 @@ type Inputs = {
   eventCountMax: string;
   haloCapPercent: string;
   seedEvents: string;
+  activeClientContext: string;
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -59,6 +60,7 @@ const INITIAL: Inputs = {
   eventCountMax: "",
   haloCapPercent: "",
   seedEvents: "",
+  activeClientContext: "",
 };
 
 const STORAGE_KEY = "arcticmind:event-sourcer:last-inputs";
@@ -117,7 +119,7 @@ export function EventSourcerApp() {
     setInputs((prev) => ({
       ...prev,
       partnerName: p.label,
-      partnerHomeBase: p.homeBase,
+      partnerHomeBase: p.homeBase || prev.partnerHomeBase,
       partnerFocus: p.focus,
       audienceTargets: p.audienceTargets,
       themeTargets: p.themeTargets,
@@ -129,6 +131,9 @@ export function EventSourcerApp() {
     }));
     setCustomizingPartner(false);
   };
+
+  const selectedPreset = findPreset(presetId);
+  const isHardcoded = !!selectedPreset?.hardcoded;
 
   const resetForm = () => {
     setPresetId("");
@@ -160,14 +165,23 @@ export function EventSourcerApp() {
     URL.revokeObjectURL(url);
   };
 
-  const requiredOk =
-    inputs.partnerName.trim() &&
-    inputs.partnerFocus.trim() &&
-    inputs.audienceTargets.trim() &&
-    inputs.themeTargets.trim() &&
-    inputs.windowStart &&
-    inputs.windowEnd &&
-    inputs.windowStart <= inputs.windowEnd;
+  // For hardcoded-partner runs the partner profile is baked into the
+  // system prompt, so we only need a valid date window.
+  const requiredOk = isHardcoded
+    ? !!(
+        inputs.windowStart &&
+        inputs.windowEnd &&
+        inputs.windowStart <= inputs.windowEnd
+      )
+    : !!(
+        inputs.partnerName.trim() &&
+        inputs.partnerFocus.trim() &&
+        inputs.audienceTargets.trim() &&
+        inputs.themeTargets.trim() &&
+        inputs.windowStart &&
+        inputs.windowEnd &&
+        inputs.windowStart <= inputs.windowEnd
+      );
 
   const run = async () => {
     if (running || !requiredOk) return;
@@ -180,6 +194,8 @@ export function EventSourcerApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           inputs: {
+            presetId: presetId || undefined,
+            promptKey: selectedPreset?.promptKey,
             partnerName: inputs.partnerName.trim(),
             partnerHomeBase: inputs.partnerHomeBase.trim(),
             partnerFocus: inputs.partnerFocus.trim(),
@@ -190,6 +206,8 @@ export function EventSourcerApp() {
             regionalScope: inputs.regionalScope.trim() || "Global",
             industry: inputs.industry.trim() || undefined,
             seedEvents: inputs.seedEvents.trim() || undefined,
+            activeClientContext:
+              inputs.activeClientContext.trim() || undefined,
             eventCountMin: inputs.eventCountMin
               ? Number(inputs.eventCountMin)
               : undefined,
@@ -260,6 +278,8 @@ export function EventSourcerApp() {
   const previewUserMessage = useMemo(() => {
     if (!requiredOk) return "";
     return composeUserMessage({
+      presetId: presetId || undefined,
+      promptKey: selectedPreset?.promptKey,
       partnerName: inputs.partnerName.trim(),
       partnerHomeBase: inputs.partnerHomeBase.trim(),
       partnerFocus: inputs.partnerFocus.trim(),
@@ -270,6 +290,7 @@ export function EventSourcerApp() {
       regionalScope: inputs.regionalScope.trim() || "Global",
       industry: inputs.industry.trim() || undefined,
       seedEvents: inputs.seedEvents.trim() || undefined,
+      activeClientContext: inputs.activeClientContext.trim() || undefined,
       eventCountMin: inputs.eventCountMin
         ? Number(inputs.eventCountMin)
         : undefined,
@@ -280,9 +301,7 @@ export function EventSourcerApp() {
         ? Number(inputs.haloCapPercent)
         : undefined,
     });
-  }, [inputs, requiredOk]);
-
-  const selectedPreset = findPreset(presetId);
+  }, [inputs, requiredOk, presetId, selectedPreset]);
 
   return (
     <div>
@@ -325,9 +344,57 @@ export function EventSourcerApp() {
             </span>
           </div>
 
-          {/* Partner details — compact summary when a preset is picked,
-              editable fields when Blank or user clicks Customize. */}
-          {selectedPreset && !customizingPartner ? (
+          {/* Partner details — three branches:
+              1. Hardcoded partner (Anuraag / Scott / Jerome / Joe): read-only
+                 card, no Edit button, shows "Prompt baked in" badge.
+              2. Thor + not customizing: compact card with Edit → button.
+              3. Thor customizing, or Blank: full editable fields. */}
+          {selectedPreset && isHardcoded ? (
+            <div
+              className="relative mt-4 overflow-hidden px-5 py-4"
+              style={{
+                background: "var(--ink-raised)",
+                border: "1px solid var(--fg-16)",
+                borderRadius: 2,
+              }}
+            >
+              <span
+                aria-hidden
+                className="absolute left-0 top-0 h-full w-[2px]"
+                style={{ background: "var(--frost)" }}
+              />
+              <div className="flex items-start gap-3 pl-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div
+                      className="serif text-[16px] leading-[1.2]"
+                      style={{ color: "var(--fg-100)" }}
+                    >
+                      {selectedPreset.label}
+                    </div>
+                    <span
+                      className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+                      style={{
+                        padding: "2px 6px",
+                        background: "var(--ink-deep)",
+                        border: "1px solid var(--frost)",
+                        color: "var(--frost)",
+                        borderRadius: 2,
+                      }}
+                    >
+                      Prompt baked in
+                    </span>
+                  </div>
+                  <p
+                    className="mt-2 text-[12.5px] leading-[1.55]"
+                    style={{ color: "var(--fg-72)" }}
+                  >
+                    {selectedPreset.summary ?? selectedPreset.focus}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : selectedPreset && !customizingPartner ? (
             <div
               className="mt-4 flex items-start gap-4 px-5 py-4"
               style={{
@@ -418,12 +485,15 @@ export function EventSourcerApp() {
             </div>
           )}
 
-          {/* Window — dates + region on one row */}
+          {/* Window — dates + (region OR home base) on one row. For
+              hardcoded partners the region is baked into the prompt,
+              so we swap that column for a Home base input since the
+              hardcoded prompts reference HOME BASE explicitly. */}
           <div className="mt-8 flex items-center gap-3">
             <span className="kicker">Window</span>
             <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-[1fr_1fr_180px]">
+          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-[1fr_1fr_200px]">
             <Field label="From" required tight>
               <input
                 type="date"
@@ -442,23 +512,59 @@ export function EventSourcerApp() {
                 disabled={running}
               />
             </Field>
-            <Field label="Region" tight>
-              <select
-                className="select"
-                value={inputs.regionalScope}
-                onChange={(e) => set("regionalScope", e.target.value)}
-                disabled={running}
-              >
-                <option>Global</option>
-                <option>North America + Europe only</option>
-                <option>North America only</option>
-                <option>US domestic only</option>
-                <option>Europe only</option>
-                <option>APAC only</option>
-                <option>EMEA only</option>
-              </select>
-            </Field>
+            {isHardcoded ? (
+              <Field label="Home base" tight>
+                <input
+                  className="input"
+                  value={inputs.partnerHomeBase}
+                  onChange={(e) => set("partnerHomeBase", e.target.value)}
+                  placeholder={
+                    presetId === "jerome-wouters"
+                      ? "London"
+                      : "e.g. Brooklyn, NY"
+                  }
+                  disabled={running}
+                />
+              </Field>
+            ) : (
+              <Field label="Region" tight>
+                <select
+                  className="select"
+                  value={inputs.regionalScope}
+                  onChange={(e) => set("regionalScope", e.target.value)}
+                  disabled={running}
+                >
+                  <option>Global</option>
+                  <option>North America + Europe only</option>
+                  <option>North America only</option>
+                  <option>US domestic only</option>
+                  <option>Europe only</option>
+                  <option>APAC only</option>
+                  <option>EMEA only</option>
+                </select>
+              </Field>
+            )}
           </div>
+
+          {/* Joe-only: Active client context */}
+          {presetId === "joe-lalley" && (
+            <div className="mt-6">
+              <Field
+                label="Active client context"
+                tight
+                hint="List currently active ArcticBlue client engagements to bias client-context events (optional)."
+              >
+                <textarea
+                  className="textarea"
+                  rows={2}
+                  value={inputs.activeClientContext}
+                  onChange={(e) => set("activeClientContext", e.target.value)}
+                  placeholder="e.g. currently engaged with Gulf Air and Tamkeen"
+                  disabled={running}
+                />
+              </Field>
+            </div>
+          )}
 
           {/* More options disclosure — industry, count, halo, home base, seeds */}
           <div className="mt-6">
@@ -527,15 +633,17 @@ export function EventSourcerApp() {
                     />
                   </Field>
                 </div>
-                <Field label="Home base" tight hint="Sets travel-burden tagging.">
-                  <input
-                    className="input"
-                    value={inputs.partnerHomeBase}
-                    onChange={(e) => set("partnerHomeBase", e.target.value)}
-                    placeholder="e.g. Brooklyn, NY"
-                    disabled={running}
-                  />
-                </Field>
+                {!isHardcoded && (
+                  <Field label="Home base" tight hint="Sets travel-burden tagging.">
+                    <input
+                      className="input"
+                      value={inputs.partnerHomeBase}
+                      onChange={(e) => set("partnerHomeBase", e.target.value)}
+                      placeholder="e.g. Brooklyn, NY"
+                      disabled={running}
+                    />
+                  </Field>
+                )}
                 <Field
                   label="Seed events"
                   tight
@@ -592,7 +700,9 @@ export function EventSourcerApp() {
             >
               {requiredOk
                 ? "Ready"
-                : "Fill required fields (partner · focus · audience · themes · dates)"}
+                : isHardcoded
+                  ? "Set a valid date window"
+                  : "Fill required fields (partner · focus · audience · themes · dates)"}
             </div>
             <button
               onClick={run}

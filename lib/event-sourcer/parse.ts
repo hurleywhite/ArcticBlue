@@ -60,7 +60,9 @@ export type ParsedOutput = {
 };
 
 // Map the bold labels in the prompt → our ParsedEvent keys.
-// Whatever isn't in this map lands in `extra`.
+// Whatever isn't in this map lands in `extra`. We handle partner-name
+// variants ("Why it fits Anuraag", "Travel burden from London") in
+// normalizeLabel() before hitting this map.
 const LABEL_MAP: Record<string, keyof ParsedEvent> = {
   link: "link",
   dates: "dates",
@@ -73,10 +75,35 @@ const LABEL_MAP: Record<string, keyof ParsedEvent> = {
   "speaking route": "speakingRoute",
   "pay-to-play for speaking": "payToPlay",
   "pay to play for speaking": "payToPlay",
-  "travel burden from partner home base": "travelBurden",
   "travel burden": "travelBurden",
   priority: "priority",
 };
+
+// Normalize label variants from the different per-partner prompts to a
+// canonical form. Returns the normalized label + a "preserve original
+// extra-key" string when the variant carries additional info we want
+// to keep for display (e.g. the named home base).
+function normalizeLabel(raw: string): {
+  canonical: string;
+  displayKey?: string;
+} {
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+
+  // "Why it fits Anuraag/Scott/Jerome/Joe" → "why it fits"
+  if (lower.startsWith("why it fits")) {
+    return { canonical: "why it fits" };
+  }
+  // "Travel burden from PARTNER HOME BASE" / "Travel burden from London" etc.
+  if (lower.startsWith("travel burden")) {
+    return { canonical: "travel burden" };
+  }
+  // "Joe's purpose" / "Format" / "Host/curator route available" /
+  // "Sector lens" / "Network warmth for Jerome" — leave them for `extra`
+  // but normalize casing so we don't get dup entries on "Format" vs
+  // "format".
+  return { canonical: lower, displayKey: trimmed };
+}
 
 const HEADING_RE = /^###\s+(\d+)\.\s*(.+?)\s*$/m;
 
@@ -154,13 +181,13 @@ function parseEventBlock(
     const m = line.match(/^\s*\*\*([^:*]+?)\*\*\s*:\s*(.*)$/);
     if (m) {
       flush();
-      const label = m[1].trim().toLowerCase();
+      const { canonical, displayKey } = normalizeLabel(m[1]);
       const value = m[2].trim();
-      const mapped = LABEL_MAP[label];
+      const mapped = LABEL_MAP[canonical];
       if (mapped) {
         currentKey = mapped;
       } else {
-        currentExtraKey = m[1].trim();
+        currentExtraKey = displayKey ?? m[1].trim();
       }
       currentValue = value ? [value] : [];
     } else if (line.trim()) {

@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
-import { BASE_SYSTEM_PROMPT } from "@/lib/event-sourcer/system-prompt";
+import { getSystemPrompt, type PromptKey } from "@/lib/event-sourcer/system-prompts";
 import {
   composeUserMessage,
   type EventSourcerInputs,
 } from "@/lib/event-sourcer/compose";
+import { findPreset } from "@/lib/event-sourcer/partner-presets";
 
 /*
   Event Sourcer streaming route.
@@ -47,23 +48,35 @@ async function handle(req: NextRequest) {
     return new Response("inputs payload is required", { status: 400 });
   }
 
-  // Minimal required-field check matching what the base prompt can't work
-  // without. UI should gate the submit button on these, but defend here too.
-  if (
-    !inputs.partnerName?.trim() ||
-    !inputs.partnerFocus?.trim() ||
-    !inputs.audienceTargets?.trim() ||
-    !inputs.themeTargets?.trim() ||
-    !inputs.windowStart?.trim() ||
-    !inputs.windowEnd?.trim()
-  ) {
-    return new Response(
-      "partnerName, partnerFocus, audienceTargets, themeTargets, windowStart, and windowEnd are required",
-      { status: 400 }
-    );
+  // Resolve prompt key from either explicit promptKey or presetId lookup.
+  const preset = inputs.presetId ? findPreset(inputs.presetId) : null;
+  const promptKey: PromptKey =
+    inputs.promptKey ?? preset?.promptKey ?? "generic";
+  const isHardcoded = promptKey !== "generic";
+
+  // Validation branches: hardcoded partners only need TIME WINDOW.
+  // Generic / Thor / Blank still need the full partner fields.
+  if (!inputs.windowStart?.trim() || !inputs.windowEnd?.trim()) {
+    return new Response("windowStart and windowEnd are required", {
+      status: 400,
+    });
+  }
+  if (!isHardcoded) {
+    if (
+      !inputs.partnerName?.trim() ||
+      !inputs.partnerFocus?.trim() ||
+      !inputs.audienceTargets?.trim() ||
+      !inputs.themeTargets?.trim()
+    ) {
+      return new Response(
+        "partnerName, partnerFocus, audienceTargets, and themeTargets are required for generic runs",
+        { status: 400 }
+      );
+    }
   }
 
-  const userMessage = composeUserMessage(inputs);
+  const userMessage = composeUserMessage({ ...inputs, promptKey });
+  const systemPrompt = getSystemPrompt(promptKey);
 
   const apiKey = process.env.DUST_API_KEY;
   const workspaceId = process.env.DUST_WORKSPACE_ID;
@@ -78,7 +91,7 @@ async function handle(req: NextRequest) {
       apiKey,
       workspaceId,
       agentId,
-      systemPrompt: BASE_SYSTEM_PROMPT,
+      systemPrompt,
       userMessage,
     });
   } catch (err) {
