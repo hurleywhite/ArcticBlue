@@ -41,7 +41,7 @@ export interface EnrichmentResult {
   products: string[];
   services: string[];
   industry: string;
-  tech_stack: Partial<TechStack>;
+  tech_stack: Partial<Record<keyof TechStack, string[]>> | Record<string, string[]>;
   employee_count_estimate: string;
   founded_year: string | null;
   headquarters: string | null;
@@ -49,7 +49,7 @@ export interface EnrichmentResult {
   recent_news: string[];
   ai_adoption: string;
   actionable_insights: string[];
-  confidence: "high" | "medium" | "low";
+  confidence: string;
 }
 
 export interface AnalyzerResult {

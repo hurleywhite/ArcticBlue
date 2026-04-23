@@ -72,9 +72,10 @@ export function AnalyzerApp() {
     <>
       <div className="callout mt-6">
         <p>
-          Enter a company domain (e.g. <code>snowflake.com</code>). Apollo firmographics,
-          Exa neural search for recent content, and Claude synthesis — returns a full
-          profile ready to feed into company scoping.
+          Enter a company domain (e.g. <code>snowflake.com</code>). Public
+          job-listing analysis + Claude web search — returns a full company
+          digest: tech stack, products, AI adoption, recent news, and actionable
+          insights.
         </p>
       </div>
 
@@ -128,10 +129,10 @@ export function AnalyzerApp() {
             className="mt-3 list-decimal pl-5 text-[13px] leading-[1.75]"
             style={{ color: "var(--fg-72)" }}
           >
-            <li>Querying Apollo for firmographics…</li>
-            <li>Exa neural search across recent signals…</li>
-            <li>Claude Sonnet synthesis of tech stack + AI posture…</li>
-            <li>Merging and returning result…</li>
+            <li>Pulling public job listings (SerpAPI / Google Jobs)…</li>
+            <li>Claude web search across products, competitors, and news…</li>
+            <li>Claude Sonnet extracting every named technology…</li>
+            <li>Merging and returning the full digest…</li>
           </ol>
           <div
             className="mt-3 font-mono text-[11px] italic"

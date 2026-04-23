@@ -55,13 +55,35 @@ export function MirrorApp() {
     };
   }, [screen]);
 
-  const handleScan = () => {
-    const resolved = resolveCompany(domain);
-    setCompany(resolved);
-    setOpportunities(OPPORTUNITY_TEMPLATES[resolved.archetype]);
+  const handleScan = async () => {
+    const fallback = resolveCompany(domain);
+    // Optimistic archetype render while the real scan runs so the
+    // animation has something to land on if the API is slow or the
+    // Anthropic key isn't set on the server.
+    setCompany(fallback);
+    setOpportunities(OPPORTUNITY_TEMPLATES[fallback.archetype]);
     setStarred(new Set());
     setScanPhase(0);
     setScreen("scanning");
+
+    try {
+      const res = await fetch("/api/mirror/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain }),
+      });
+      if (!res.ok) return; // Keep the fallback archetype on 501/500.
+      const data = (await res.json()) as {
+        company: MirrorCompany;
+        opportunities: MirrorOpportunity[];
+      };
+      if (data?.company && Array.isArray(data.opportunities)) {
+        setCompany(data.company);
+        setOpportunities(data.opportunities);
+      }
+    } catch (err) {
+      console.warn("[mirror] scan API failed, keeping archetype:", err);
+    }
   };
 
   const toggleStar = (id: string) => {

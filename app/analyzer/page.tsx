@@ -9,7 +9,7 @@ export default function AnalyzerPage() {
       <PageHeader
         kicker="Analyzer"
         title="A company's tech stack and AI posture, inferred from public signals."
-        description="Apollo firmographics + Exa-sourced recent content + Claude synthesis. Domain in, full profile out."
+        description="Public job listings + Claude web search, synthesized into a full company digest — tech stack, products, AI adoption, recent news, actionable insights."
       />
       <div className="mt-12">
         <AnalyzerApp />

@@ -1,29 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { apolloEnrichOrg, apolloJobPostings, apolloToProfile, mapApolloTechCategory } from "@/lib/analyzer/apollo";
-import { exaRecentNews, exaJobListings, type ExaResult } from "@/lib/analyzer/exa";
+import { fetchJobsFromSerpApi } from "@/lib/analyzer/serpapi";
 import { extractTechStack } from "@/lib/analyzer/tech-stack";
-import { synthesizeCompanyInsight } from "@/lib/analyzer/synthesize";
-import { extractCompanyName, extractDomain, getConfidence } from "@/lib/analyzer/utils";
-import { EMPTY_TECH_STACK, type AnalyzerResult, type JobListing, type TechStack } from "@/lib/analyzer/types";
+import { enrichCompanyFromWeb } from "@/lib/analyzer/enrichment";
+import {
+  extractCompanyName,
+  extractDomain,
+  getConfidence,
+} from "@/lib/analyzer/utils";
+import {
+  EMPTY_TECH_STACK,
+  type AnalyzerResult,
+  type TechStack,
+} from "@/lib/analyzer/types";
 
 /*
-  Company Analyzer endpoint (v2 — Apollo + Exa + Claude).
+  Company Analyzer endpoint — ported from
+  hurleywhite/arcticmind-tech-stack-analyzer.
 
-  POST { companyUrl }
+  POST { companyUrl } → AnalyzerResult
+
   Flow:
-  1. Normalize domain, derive company name
-  2. Apollo: enrich organization (firmographics + detected technologies)
-  3. In parallel:
-     a. Apollo: organization job postings (if org id available)
-     b. Exa.ai: recent news about the company (last 30 days)
-  4. If Apollo returned no job postings, fall back to Exa job-listing search
-  5. Claude Sonnet 4.6: extract additional tech stack from job descriptions
-     (merges with Apollo's detected technologies)
-  6. Claude Sonnet 4.6: synthesize a narrative summary + AI-adoption
-     signal + actionable insights from the combined facts
+  1. Normalize domain + derive company name.
+  2. Path A (preferred, when SERPAPI_KEY is set and there are jobs):
+     - In parallel: SerpAPI Google-Jobs listings + Claude web_search
+       enrichment. Claude tech-stack extractor runs on the jobs.
+     - Merge the two tech stacks (job analysis primary, enrichment
+       fills gaps).
+  3. Path B (fallback, when no jobs available):
+     - Claude web_search enrichment alone builds the full profile.
 
-  Returns AnalyzerResult. No client caching — Vercel edge cache can be
-  layered in later if calls get expensive.
+  No Supabase caching in this port. Vercel edge cache can layer later
+  if calls get expensive.
 */
 
 export const runtime = "nodejs";
@@ -33,7 +40,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => null);
     if (!body || typeof body.companyUrl !== "string") {
-      return NextResponse.json({ error: "companyUrl is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "companyUrl is required" },
+        { status: 400 }
+      );
     }
 
     if (!process.env.ANTHROPIC_API_KEY && !process.env.CLAUDE_API_KEY) {
@@ -49,119 +59,146 @@ export async function POST(request: NextRequest) {
     const domain = extractDomain(body.companyUrl);
     const companyName = extractCompanyName(domain);
 
-    // Step 1 — Apollo firmographics (best single source for structured company data)
-    const apolloOrg = await apolloEnrichOrg(domain);
-    const profile = apolloOrg ? apolloToProfile(apolloOrg) : null;
-    const orgId = apolloOrg?.id;
+    // Kick off web enrichment unconditionally; it's the single source
+    // of truth for products/services/news/AI adoption etc.
+    const enrichmentPromise = enrichCompanyFromWeb(domain, companyName);
 
-    // Step 2 — Parallel: Apollo job postings + Exa recent news
-    const [apolloJobs, exaNews] = await Promise.all([
-      orgId ? apolloJobPostings(orgId, 20) : Promise.resolve([]),
-      exaRecentNews(profile?.name ?? companyName, domain, 30),
-    ]);
-
-    // Step 3 — Exa fallback for job listings if Apollo returned none
-    let jobListings: JobListing[] = apolloJobs.map((j) => ({
-      title: j.title,
-      company_name: profile?.name ?? companyName,
-      location: j.location ?? "",
-      description: j.description ?? "",
-    }));
-
-    let exaJobs: ExaResult[] = [];
-    if (jobListings.length === 0) {
-      exaJobs = await exaJobListings(profile?.name ?? companyName, domain);
-      jobListings = exaJobs.map((e) => ({
-        title: e.title ?? "",
-        company_name: profile?.name ?? companyName,
-        location: "",
-        description: e.text ?? "",
-      }));
+    // Try SerpAPI. Soft-fails to empty array when no key or no hits.
+    let jobs: Awaited<ReturnType<typeof fetchJobsFromSerpApi>> = [];
+    try {
+      jobs = await fetchJobsFromSerpApi(companyName);
+    } catch (e) {
+      console.log("[analyzer] SerpAPI failed, falling back to enrichment only:", e);
     }
 
-    // Step 4 — Claude tech-stack extraction from whatever job descriptions we have
-    const jobsWithDescriptions = jobListings.filter((j) => j.description && j.description.length > 200);
-    const extractedStack = jobsWithDescriptions.length > 0
-      ? await extractTechStack(jobsWithDescriptions, profile?.name ?? companyName).catch((err) => {
-          console.error("[analyzer] tech stack extraction failed:", err);
+    if (jobs.length > 0) {
+      // ── Path A: Jobs + enrichment in parallel ──
+      const [extraction, enrichment] = await Promise.all([
+        extractTechStack(jobs, companyName).catch((err) => {
+          console.error("[analyzer] tech-stack extraction failed:", err);
           return null;
-        })
-      : null;
+        }),
+        enrichmentPromise,
+      ]);
 
-    // Step 5 — Merge: Apollo detected technologies + Claude-extracted tech stack
+      const confidence = getConfidence(jobs.length);
+      const displayName =
+        enrichment.company_name ||
+        companyName.charAt(0).toUpperCase() + companyName.slice(1);
+
+      // Merge tech stacks. Extraction (from real jobs) is primary;
+      // enrichment fills categories extraction didn't have.
+      const mergedStack: TechStack = { ...EMPTY_TECH_STACK };
+      if (extraction) {
+        for (const k of Object.keys(extraction.tech_stack) as Array<
+          keyof TechStack
+        >) {
+          mergedStack[k] = [...(extraction.tech_stack[k] ?? [])];
+        }
+      }
+      for (const [category, techs] of Object.entries(enrichment.tech_stack)) {
+        if (!Array.isArray(techs)) continue;
+        const cat = category as keyof TechStack;
+        if (!mergedStack[cat]) mergedStack[cat] = [];
+        const existing = new Set(
+          mergedStack[cat].map((t: string) => t.toLowerCase())
+        );
+        for (const tech of techs) {
+          if (!existing.has(tech.toLowerCase())) {
+            mergedStack[cat].push(tech);
+          }
+        }
+      }
+
+      // Rich summary = enrichment summary + products mention if missing.
+      let richSummary = enrichment.summary || extraction?.summary || "";
+      if (
+        enrichment.products.length > 0 &&
+        !richSummary.includes("Products:")
+      ) {
+        richSummary += ` Products: ${enrichment.products.join(", ")}.`;
+      }
+
+      const result: AnalyzerResult = {
+        company: displayName,
+        domain,
+        tech_stack: mergedStack,
+        summary: richSummary,
+        jobs_analyzed: jobs.length,
+        job_titles_sampled: [...new Set(jobs.map((j) => j.title))].slice(0, 20),
+        confidence,
+        enrichment_source: "jobs_and_web",
+        products: enrichment.products,
+        services: enrichment.services,
+        industry: enrichment.industry,
+        competitors: enrichment.competitors,
+        recent_news: enrichment.recent_news,
+        ai_adoption: enrichment.ai_adoption,
+        actionable_insights: enrichment.actionable_insights,
+        employee_count_estimate: enrichment.employee_count_estimate,
+        founded_year: enrichment.founded_year,
+        headquarters: enrichment.headquarters,
+        last_analyzed: new Date().toISOString(),
+      };
+
+      return NextResponse.json(result);
+    }
+
+    // ── Path B: Web enrichment only ──
+    const enrichment = await enrichmentPromise;
+
+    // Fold enrichment.tech_stack into the typed TechStack shape.
     const mergedStack: TechStack = { ...EMPTY_TECH_STACK };
-    const addTech = (category: keyof TechStack, tech: string) => {
-      if (!tech || tech.length > 80) return;
-      if (!mergedStack[category].includes(tech)) mergedStack[category].push(tech);
-    };
-    // From Apollo
-    if (profile?.technologies) {
-      for (const t of profile.technologies) {
-        const cat = mapApolloTechCategory(t.category ?? "") as keyof TechStack;
-        addTech(cat, t.name);
-      }
-    }
-    // From Claude extraction
-    if (extractedStack) {
-      for (const k of Object.keys(extractedStack.tech_stack) as Array<keyof TechStack>) {
-        for (const tech of extractedStack.tech_stack[k] ?? []) addTech(k, tech);
+    for (const [category, techs] of Object.entries(enrichment.tech_stack)) {
+      if (!Array.isArray(techs)) continue;
+      const cat = category as keyof TechStack;
+      if (!mergedStack[cat]) mergedStack[cat] = [];
+      for (const tech of techs) {
+        if (!mergedStack[cat].includes(tech)) mergedStack[cat].push(tech);
       }
     }
 
-    // Step 6 — Claude synthesis for narrative fields
-    const newsDigest = exaNews
-      .slice(0, 8)
-      .map((n, i) => `${i + 1}. ${n.title}${n.publishedDate ? ` (${n.publishedDate.slice(0, 10)})` : ""}${n.text ? `\n${n.text.slice(0, 400)}` : ""}`)
-      .join("\n\n");
-    const synthesis = await synthesizeCompanyInsight({
-      companyName: profile?.name ?? companyName,
-      domain,
-      profile,
-      jobTitles: jobListings.map((j) => j.title).slice(0, 12),
-      techStack: mergedStack,
-      newsDigest,
-    }).catch((err) => {
-      console.error("[analyzer] synthesis failed:", err);
-      return null;
-    });
+    let richSummary = enrichment.summary || "";
+    if (enrichment.products.length > 0) {
+      richSummary += ` Products: ${enrichment.products.join(", ")}.`;
+    }
+    if (enrichment.services.length > 0) {
+      richSummary += ` Services: ${enrichment.services.join(", ")}.`;
+    }
 
-    const enrichment_source: AnalyzerResult["enrichment_source"] =
-      apolloJobs.length > 0
-        ? "jobs_and_web"
-        : jobListings.length > 0
-          ? "jobs_and_web"
-          : "web_scrape";
+    const confidence = (["high", "medium", "low"] as const).includes(
+      enrichment.confidence as "high" | "medium" | "low"
+    )
+      ? (enrichment.confidence as "high" | "medium" | "low")
+      : "low";
 
     const result: AnalyzerResult = {
-      company: profile?.name ?? capitalize(companyName),
+      company: enrichment.company_name,
       domain,
       tech_stack: mergedStack,
-      summary: synthesis?.summary ?? profile?.short_description ?? "",
-      jobs_analyzed: jobListings.length,
-      job_titles_sampled: [...new Set(jobListings.map((j) => j.title))].slice(0, 20),
-      confidence: getConfidence(jobListings.length),
-      enrichment_source,
-      products: synthesis?.products ?? [],
-      services: synthesis?.services ?? [],
-      industry: profile?.industry ?? synthesis?.industry ?? "",
-      competitors: synthesis?.competitors ?? [],
-      recent_news: exaNews.slice(0, 5).map((n) => n.title ?? "").filter(Boolean),
-      ai_adoption: synthesis?.ai_adoption ?? "Unknown",
-      actionable_insights: synthesis?.actionable_insights ?? [],
-      employee_count_estimate: profile?.employee_count_estimate ?? "unknown",
-      founded_year: profile?.founded_year ?? null,
-      headquarters: profile?.headquarters ?? null,
+      summary: richSummary,
+      jobs_analyzed: 0,
+      job_titles_sampled: [],
+      confidence,
+      enrichment_source: "web_scrape",
+      products: enrichment.products,
+      services: enrichment.services,
+      industry: enrichment.industry,
+      competitors: enrichment.competitors,
+      recent_news: enrichment.recent_news,
+      ai_adoption: enrichment.ai_adoption,
+      actionable_insights: enrichment.actionable_insights,
+      employee_count_estimate: enrichment.employee_count_estimate,
+      founded_year: enrichment.founded_year,
+      headquarters: enrichment.headquarters,
       last_analyzed: new Date().toISOString(),
     };
 
     return NextResponse.json(result);
   } catch (err) {
     console.error("[analyzer] error:", err);
-    const msg = err instanceof Error ? err.message : "An unexpected error occurred";
+    const msg =
+      err instanceof Error ? err.message : "An unexpected error occurred";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
-
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }

@@ -1,12 +1,10 @@
-import { anthropic, MODELS } from "@/lib/anthropic";
-import type { ClaudeExtractionResult, JobListing } from "./types";
-import { EMPTY_TECH_STACK } from "./types";
+import Anthropic from "@anthropic-ai/sdk";
+import type { JobListing, ClaudeExtractionResult, TechStack } from "./types";
 
 /*
-  Tech-stack extraction — runs Claude Sonnet 4.6 over job descriptions
-  to identify named technologies and categorize them. Ported from the
-  existing arcticmind-tech-stack-analyzer repo, updated to use our
-  shared lib/anthropic client and model constant.
+  Ported from hurleywhite/arcticmind-tech-stack-analyzer.
+  Claude Sonnet extracts every specific named technology from a set
+  of job descriptions and categorizes into 14 buckets.
 */
 
 const SYSTEM_PROMPT = `You are a tech stack analyst. Given a set of job listings from a company, extract every specific technology, tool, platform, framework, programming language, and software product mentioned.
@@ -44,8 +42,9 @@ const MAX_DESCRIPTION_CHARS = 1500;
 const MAX_JOBS = 20;
 
 function formatJobsForPrompt(jobs: JobListing[], companyName: string): string {
-  const trimmed = jobs.slice(0, MAX_JOBS);
-  const formatted = trimmed
+  const trimmedJobs = jobs.slice(0, MAX_JOBS);
+
+  const formattedJobs = trimmedJobs
     .map((job, i) => {
       const desc =
         job.description.length > MAX_DESCRIPTION_CHARS
@@ -54,34 +53,73 @@ function formatJobsForPrompt(jobs: JobListing[], companyName: string): string {
       return `--- Job ${i + 1}: ${job.title} ---\nLocation: ${job.location}\n${desc}`;
     })
     .join("\n\n");
-  return `Analyze these ${trimmed.length} job listings from ${companyName} and extract their tech stack:\n\n${formatted}`;
+
+  return `Analyze these ${trimmedJobs.length} job listings from ${companyName} and extract their tech stack:\n\n${formattedJobs}`;
 }
+
+const EXPECTED_CATEGORIES: (keyof TechStack)[] = [
+  "cloud_infrastructure",
+  "data_engineering",
+  "backend",
+  "frontend",
+  "mobile",
+  "devops_ci_cd",
+  "databases",
+  "marketing_sales",
+  "design",
+  "project_management",
+  "ai_ml",
+  "security",
+  "communication",
+  "other",
+];
 
 export async function extractTechStack(
   jobs: JobListing[],
   companyName: string
 ): Promise<ClaudeExtractionResult> {
-  const client = anthropic();
-  const user = formatJobsForPrompt(jobs, companyName);
-
-  const response = await client.messages.create({
-    model: MODELS.PRACTICE,
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: user }],
-  });
-
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("No text response from Claude");
+  const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "No API key found. Set ANTHROPIC_API_KEY in Vercel environment variables."
+    );
   }
 
-  const parsed = JSON.parse(textBlock.text) as ClaudeExtractionResult;
-  // Guarantee every category is an array
-  const merged = { ...EMPTY_TECH_STACK, ...parsed.tech_stack };
-  for (const k of Object.keys(EMPTY_TECH_STACK) as Array<keyof typeof EMPTY_TECH_STACK>) {
-    if (!Array.isArray(merged[k])) merged[k] = [];
+  const client = new Anthropic({ apiKey });
+  const userMessage = formatJobsForPrompt(jobs, companyName);
+
+  try {
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userMessage }],
+    });
+
+    const textBlock = response.content.find((block) => block.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("No text response from Claude");
+    }
+
+    const parsed: ClaudeExtractionResult = JSON.parse(textBlock.text);
+
+    for (const cat of EXPECTED_CATEGORIES) {
+      if (!Array.isArray(parsed.tech_stack[cat])) {
+        parsed.tech_stack[cat] = [];
+      }
+    }
+
+    return parsed;
+  } catch (error: unknown) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("rate_limit") ||
+        error.message.includes("429"))
+    ) {
+      throw new Error(
+        "Rate limit reached on the AI API. Please wait a minute and try again."
+      );
+    }
+    throw error;
   }
-  parsed.tech_stack = merged;
-  return parsed;
 }
