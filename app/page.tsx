@@ -62,25 +62,43 @@ export default function HomePage() {
       )}
 
       <h2 className="section-header mt-10 mb-3">Sections</h2>
-      <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-2">
+        <SurfaceCell
+          kicker="Deliverables"
+          title="Run ArcticBlue's methods on client work"
+          body="Multi-step workflows that produce branded, client-ready deliverables — interview synthesis, meeting recap, pilot scoping — with optional partner co-brand and referral block."
+          stat="3 workflows"
+          href="/deliverables"
+        />
+        <SurfaceCell
+          kicker="Facilitators"
+          title="The global facilitator pool"
+          body="External consultants + trainers available for engagements. Filter by focus, experience, region. Pull into proposals or match to a client Lab."
+          stat="12 facilitators"
+          href="/facilitators"
+          last
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-3">
         <SurfaceCell
           kicker="Workbench"
-          title="Pipeline and meeting prep"
-          body={`${ACCOUNTS.length} accounts in the pipeline. The per-meeting flow drafts a brief: who they are, five discovery questions, cases to cite, and a follow-up email.`}
+          title="Pipeline + meeting prep"
+          body={`${ACCOUNTS.length} accounts. Claude drafts the pre-meeting brief and post-meeting follow-up. Edit notes, log activity, move stages.`}
           stat={`${ACCOUNTS.length} accounts`}
           href="/workbench"
         />
         <SurfaceCell
           kicker="Showcase"
           title="Demos for screen share"
-          body="Six demos: Mirror, Canvas, Analyzer, Practice, case-study deck, Lab explainer. Each has a present mode that hides the app chrome."
+          body="Six demos with present mode: Mirror, Canvas, Analyzer, Practice, case-study deck, Lab explainer."
           stat="6 demos"
           href="/showcase"
         />
         <SurfaceCell
           kicker="Library"
           title="Reference material"
-          body={`${PROMPTS.length} prompts, ${TEMPLATES.length} templates, ${USE_CASES.length} cases, ${RESOURCES.length} resources, ${MODULES.length} modules. Filter by kind or topic. Cite copies a reference to the clipboard.`}
+          body={`${PROMPTS.length + TEMPLATES.length + USE_CASES.length + RESOURCES.length + MODULES.length} items. Filter, cite, or compose a proposal.`}
           stat={`${PROMPTS.length + TEMPLATES.length + USE_CASES.length + RESOURCES.length + MODULES.length} items`}
           href="/library"
           last
@@ -89,10 +107,10 @@ export default function HomePage() {
 
       <h2 className="section-header mt-10 mb-3">Shortcuts</h2>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <ShortcutTile href="/deliverables/interview-synthesis" title="Interview synthesis" sub="Branded deliverable" />
+        <ShortcutTile href="/facilitators" title="Facilitators" sub="Pool of 12" />
         <ShortcutTile href="/mirror" title="Mirror" sub="Opportunity field" />
-        <ShortcutTile href="/showcase/analyzer" title="Analyzer" sub="Company profile" />
         <ShortcutTile href="/showcase/cases" title="Case studies" sub="Click-through deck" />
-        <ShortcutTile href="/showcase/lab" title="Practical Labs" sub="Product explainer" />
       </div>
     </div>
   );

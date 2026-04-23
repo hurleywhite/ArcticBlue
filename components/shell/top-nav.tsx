@@ -11,7 +11,9 @@ import Link from "next/link";
 
 const PRIMARY: Array<{ label: string; href: string }> = [
   { label: "Workbench", href: "/workbench" },
+  { label: "Deliverables", href: "/deliverables" },
   { label: "Showcase", href: "/showcase" },
+  { label: "Facilitators", href: "/facilitators" },
   { label: "Library", href: "/library" },
 ];
 
