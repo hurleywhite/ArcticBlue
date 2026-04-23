@@ -83,40 +83,68 @@ export function TemplateRunner({ template }: { template: Template }) {
   };
 
   return (
-    <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-[1fr_1fr]">
+    <div className="mt-8 grid grid-cols-1 gap-10 md:grid-cols-[1fr_1fr]">
       <div>
-        <h2 className="section-header mb-3">Fill the variables</h2>
-        <table className="doc-table">
-          <thead>
-            <tr>
-              <th style={{ width: "36%" }}>Variable</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {template.variables.map((v) => (
-              <tr key={v.name}>
-                <td>
-                  <strong>{v.label}</strong>
-                  <div className="mt-0.5 text-[11px] text-ink-muted">
-                    <code>{`{{${v.name}}}`}</code>
-                  </div>
-                </td>
-                <td>
-                  <input
-                    className="input"
-                    placeholder={v.placeholder ?? ""}
-                    value={vars[v.name]}
-                    onChange={(e) =>
-                      setVars((prev) => ({ ...prev, [v.name]: e.target.value }))
-                    }
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-ink-border pt-4">
+        <div className="flex items-center gap-3">
+          <span className="kicker">Fill the variables</span>
+          <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+        </div>
+        <div
+          className="mt-4 overflow-hidden"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            borderRadius: 2,
+          }}
+        >
+          {template.variables.map((v, idx) => (
+            <div
+              key={v.name}
+              className="grid grid-cols-1 gap-0 md:grid-cols-[200px_1fr]"
+              style={{
+                borderBottom:
+                  idx === template.variables.length - 1
+                    ? "none"
+                    : "1px solid var(--fg-16)",
+              }}
+            >
+              <div
+                className="px-4 py-3"
+                style={{
+                  background: "var(--ink-deep)",
+                  borderRight: "1px solid var(--fg-16)",
+                }}
+              >
+                <div
+                  className="serif text-[14px] leading-[1.2]"
+                  style={{ color: "var(--fg-100)" }}
+                >
+                  {v.label}
+                </div>
+                <div
+                  className="mt-1 font-mono text-[10.5px]"
+                  style={{ color: "var(--frost)" }}
+                >
+                  {`{{${v.name}}}`}
+                </div>
+              </div>
+              <div className="px-4 py-3">
+                <input
+                  className="input"
+                  placeholder={v.placeholder ?? ""}
+                  value={vars[v.name]}
+                  onChange={(e) =>
+                    setVars((prev) => ({ ...prev, [v.name]: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div
+          className="mt-5 flex flex-wrap items-center gap-2 border-t pt-5"
+          style={{ borderTopColor: "var(--fg-16)" }}
+        >
           <button onClick={copyMarkdown} className="btn-secondary">
             {copied === "md" ? "Copied" : "Copy markdown"}
           </button>
@@ -133,9 +161,17 @@ export function TemplateRunner({ template }: { template: Template }) {
       </div>
 
       <div>
-        <h2 className="section-header mb-3">Preview</h2>
+        <div className="flex items-center gap-3">
+          <span className="kicker">Preview</span>
+          <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+        </div>
         <div
-          className="card-surface prose-editorial"
+          className="prose-editorial mt-4 px-6 py-5"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            borderRadius: 2,
+          }}
           dangerouslySetInnerHTML={{ __html: filledHtml }}
         />
       </div>

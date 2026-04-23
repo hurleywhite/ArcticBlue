@@ -93,26 +93,51 @@ export function PromptRunner({ prompt }: { prompt: Prompt }) {
 
   return (
     <div>
-      <h2 className="section-header mb-3">Fill the variables</h2>
-      <table className="doc-table">
-        <thead>
-          <tr>
-            <th style={{ width: "28%" }}>Variable</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {prompt.variables.map((v) => (
-            <tr key={v.name}>
-              <td>
-                <div>
-                  <strong>{v.label}</strong>
+      <section>
+        <div className="flex items-center gap-3">
+          <span className="kicker">Fill the variables</span>
+          <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+        </div>
+        <div
+          className="mt-4 overflow-hidden"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            borderRadius: 2,
+          }}
+        >
+          {prompt.variables.map((v, idx) => (
+            <div
+              key={v.name}
+              className="grid grid-cols-1 gap-0 md:grid-cols-[240px_1fr]"
+              style={{
+                borderBottom:
+                  idx === prompt.variables.length - 1
+                    ? "none"
+                    : "1px solid var(--fg-16)",
+              }}
+            >
+              <div
+                className="px-5 py-4"
+                style={{
+                  background: "var(--ink-deep)",
+                  borderRight: "1px solid var(--fg-16)",
+                }}
+              >
+                <div
+                  className="serif text-[15px] leading-[1.2]"
+                  style={{ color: "var(--fg-100)" }}
+                >
+                  {v.label}
                 </div>
-                <div className="mt-0.5 text-[11px] text-ink-muted">
-                  <code>{`{{${v.name}}}`}</code>
+                <div
+                  className="mt-1.5 font-mono text-[11px]"
+                  style={{ color: "var(--frost)" }}
+                >
+                  {`{{${v.name}}}`}
                 </div>
-              </td>
-              <td>
+              </div>
+              <div className="px-5 py-4">
                 {v.type === "textarea" ? (
                   <textarea
                     className="textarea"
@@ -148,18 +173,35 @@ export function PromptRunner({ prompt }: { prompt: Prompt }) {
                     }
                   />
                 )}
-              </td>
-            </tr>
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </section>
 
-      <h2 className="section-header mt-8 mb-3">Filled prompt</h2>
-      <pre className="card-surface whitespace-pre-wrap text-[12px] leading-[1.55]">
-        {filled}
-      </pre>
+      <section className="mt-10">
+        <div className="flex items-center gap-3">
+          <span className="kicker">Filled prompt</span>
+          <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+        </div>
+        <pre
+          className="mt-4 whitespace-pre-wrap px-5 py-4 text-[12.5px] leading-[1.65]"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            color: "var(--fg-72)",
+            fontFamily: "var(--font-ibm-plex-mono), ui-monospace, monospace",
+            borderRadius: 2,
+          }}
+        >
+          {filled}
+        </pre>
+      </section>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-ink-border pt-4">
+      <div
+        className="mt-6 flex flex-wrap items-center gap-2 border-t pt-5"
+        style={{ borderTopColor: "var(--fg-16)" }}
+      >
         <button onClick={copy} className="btn-secondary">
           {copied ? "Copied" : "Copy to clipboard"}
         </button>
@@ -172,22 +214,45 @@ export function PromptRunner({ prompt }: { prompt: Prompt }) {
       </div>
 
       {(runOutput || running) && (
-        <div className="mt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="section-header mb-0">Output</h2>
+        <section className="mt-10">
+          <div className="flex items-center gap-3">
+            <span className="kicker">Output</span>
+            <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
             {runModel && (
-              <span className="border border-navy bg-ice px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
+              <span
+                className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+                style={{
+                  padding: "3px 8px",
+                  background:
+                    runModel === "mock" ? "transparent" : "var(--ink-deep)",
+                  border:
+                    runModel === "mock"
+                      ? "1px solid var(--fg-16)"
+                      : "1px solid var(--frost)",
+                  color:
+                    runModel === "mock" ? "var(--fg-52)" : "var(--frost)",
+                  borderRadius: 2,
+                }}
+              >
                 {runModel === "mock" ? "MOCK" : runModel.replace("claude-", "")}
               </span>
             )}
           </div>
           <div
-            className="card-surface prose-editorial mt-2"
+            className="prose-editorial mt-4 px-6 py-5"
+            style={{
+              background: "var(--ink-raised)",
+              border: "1px solid var(--fg-16)",
+              borderRadius: 2,
+            }}
             dangerouslySetInnerHTML={{
-              __html: marked.parse(runOutput || "_Waiting for first tokens…_", { async: false }) as string,
+              __html: marked.parse(
+                runOutput || "_Waiting for first tokens…_",
+                { async: false }
+              ) as string,
             }}
           />
-        </div>
+        </section>
       )}
     </div>
   );

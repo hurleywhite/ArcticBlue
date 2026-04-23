@@ -42,28 +42,59 @@ export default async function UseCaseDetail({
   ).slice(0, 3);
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-8">
-      <div className="bg-navy px-6 py-5 text-white">
-        <div className="text-[11px] font-bold uppercase tracking-[0.12em] opacity-80">
-          <Link href="/use-cases" className="hover:underline">
-            Use Cases
-          </Link>
-          <span className="mx-2">·</span>
-          <span>{u.anonymized_client_label}</span>
-          <span className="mx-2">·</span>
-          <span>{(u.tags.industries ?? []).join(" · ")}</span>
-        </div>
-        <h1 className="mt-2 text-[22px] font-bold leading-[1.15]">{u.title}</h1>
-        <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px]">
-          <div>
-            <span className="opacity-70">Headline metric:</span>{" "}
-            <strong>{u.headline_metric}</strong>
+    <div className="shell pb-32 pt-8">
+      {/* Header — dark band with frost accent rail */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: "var(--ink-raised)",
+          border: "1px solid var(--fg-16)",
+          borderRadius: 2,
+        }}
+      >
+        <span
+          aria-hidden
+          className="absolute left-0 top-0 h-full w-[2px]"
+          style={{ background: "var(--frost)" }}
+        />
+        <div className="px-7 py-6">
+          <div className="kicker-sm">
+            <Link
+              href="/use-cases"
+              style={{ color: "var(--frost)" }}
+              className="hover:opacity-80"
+            >
+              Use Cases
+            </Link>
+            <span className="mx-2" style={{ color: "var(--fg-32)" }}>·</span>
+            <span>{u.anonymized_client_label}</span>
+            <span className="mx-2" style={{ color: "var(--fg-32)" }}>·</span>
+            <span>{(u.tags.industries ?? []).join(" · ")}</span>
           </div>
-          <div className="opacity-80">{u.summary.split(".")[0]}.</div>
+          <h1
+            className="serif-tight mt-3 text-[32px] leading-[1.1]"
+            style={{ color: "var(--fg-100)" }}
+          >
+            {u.title}
+          </h1>
+          <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <div
+              className="serif text-[20px] leading-[1]"
+              style={{ color: "var(--frost)" }}
+            >
+              {u.headline_metric}
+            </div>
+            <div
+              className="text-[13px] leading-[1.55]"
+              style={{ color: "var(--fg-72)" }}
+            >
+              {u.summary.split(".")[0]}.
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-[1fr_260px]">
+      <div className="mt-10 grid grid-cols-1 gap-10 md:grid-cols-[1fr_260px]">
         <div>
           <CaseTabs
             story={{
@@ -81,47 +112,43 @@ export default async function UseCaseDetail({
         </div>
 
         <aside>
-          <h3 className="section-header mb-2">30-second pitch</h3>
-          <div className="callout">
-            <p className="text-[12px] leading-[1.55]">{u.pitch_30sec}</p>
+          <div className="flex items-center gap-3">
+            <span className="kicker">30-second pitch</span>
+            <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+          </div>
+          <div className="callout mt-3">
+            <p>{u.pitch_30sec}</p>
           </div>
 
-          <h3 className="section-header mt-8 mb-2">Tags</h3>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="mt-8 flex items-center gap-3">
+            <span className="kicker">Tags</span>
+            <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {(u.tags.industries ?? []).map((i) => (
-              <span
-                key={i}
-                className="border border-ink-border bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy"
-              >
-                {i}
-              </span>
+              <Pill key={i}>{i}</Pill>
             ))}
             {(u.tags.categories ?? []).map((c) => (
-              <span
-                key={c}
-                className="border border-ice bg-ice px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy"
-              >
+              <Pill key={c} frost>
                 {c}
-              </span>
+              </Pill>
             ))}
           </div>
 
           {relatedModules.length > 0 && (
             <>
-              <h3 className="section-header mt-8 mb-2">Related learning</h3>
-              <ul className="m-0 list-none p-0">
+              <div className="mt-8 flex items-center gap-3">
+                <span className="kicker">Related learning</span>
+                <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+              </div>
+              <ul className="m-0 mt-3 flex list-none flex-col gap-1.5 p-0">
                 {relatedModules.map((m) => (
-                  <li key={m.id} className="mb-2">
-                    <Link
-                      href={`/learning/${m.slug}`}
-                      className="block border border-ink-border bg-white px-3 py-2 transition hover:border-navy"
-                    >
-                      <div className="text-[11px] font-bold text-navy">{m.title}</div>
-                      <div className="mt-0.5 text-[11px] text-ink-muted">
-                        {m.estimated_minutes} min
-                      </div>
-                    </Link>
-                  </li>
+                  <AsideLink
+                    key={m.id}
+                    href={`/learning/${m.slug}`}
+                    title={m.title}
+                    sub={`${m.estimated_minutes} min`}
+                  />
                 ))}
               </ul>
             </>
@@ -129,20 +156,18 @@ export default async function UseCaseDetail({
 
           {relatedPrompts.length > 0 && (
             <>
-              <h3 className="section-header mt-8 mb-2">Try this approach</h3>
-              <ul className="m-0 list-none p-0">
+              <div className="mt-8 flex items-center gap-3">
+                <span className="kicker">Try this approach</span>
+                <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+              </div>
+              <ul className="m-0 mt-3 flex list-none flex-col gap-1.5 p-0">
                 {relatedPrompts.map((p) => (
-                  <li key={p.id} className="mb-2">
-                    <Link
-                      href={`/tools/prompts/${p.slug}`}
-                      className="block border border-ink-border bg-white px-3 py-2 transition hover:border-navy"
-                    >
-                      <div className="text-[11px] font-bold text-navy">{p.title}</div>
-                      <div className="mt-0.5 text-[11px] text-ink-muted">
-                        Prompt · try it in Practice
-                      </div>
-                    </Link>
-                  </li>
+                  <AsideLink
+                    key={p.id}
+                    href={`/tools/prompts/${p.slug}`}
+                    title={p.title}
+                    sub="Prompt · try it in Practice"
+                  />
                 ))}
               </ul>
             </>
@@ -150,20 +175,18 @@ export default async function UseCaseDetail({
 
           {relatedCases.length > 0 && (
             <>
-              <h3 className="section-header mt-8 mb-2">Related cases</h3>
-              <ul className="m-0 list-none p-0">
+              <div className="mt-8 flex items-center gap-3">
+                <span className="kicker">Related cases</span>
+                <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+              </div>
+              <ul className="m-0 mt-3 flex list-none flex-col gap-1.5 p-0">
                 {relatedCases.map((rc) => (
-                  <li key={rc.id} className="mb-2">
-                    <Link
-                      href={`/use-cases/${rc.slug}`}
-                      className="block border border-ink-border bg-white px-3 py-2 transition hover:border-navy"
-                    >
-                      <div className="text-[11px] font-bold text-navy">{rc.title}</div>
-                      <div className="mt-0.5 text-[11px] text-ink-muted">
-                        {rc.anonymized_client_label}
-                      </div>
-                    </Link>
-                  </li>
+                  <AsideLink
+                    key={rc.id}
+                    href={`/use-cases/${rc.slug}`}
+                    title={rc.title}
+                    sub={rc.anonymized_client_label}
+                  />
                 ))}
               </ul>
             </>
@@ -171,5 +194,71 @@ export default async function UseCaseDetail({
         </aside>
       </div>
     </div>
+  );
+}
+
+function Pill({
+  children,
+  frost,
+}: {
+  children: React.ReactNode;
+  frost?: boolean;
+}) {
+  return (
+    <span
+      className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+      style={{
+        padding: "3px 7px",
+        background: frost ? "rgba(139, 178, 237, 0.12)" : "var(--ink-raised)",
+        border: `1px solid ${frost ? "var(--frost-deep)" : "var(--fg-16)"}`,
+        color: frost ? "var(--frost)" : "var(--fg-72)",
+        borderRadius: 2,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function AsideLink({
+  href,
+  title,
+  sub,
+}: {
+  href: string;
+  title: string;
+  sub: string;
+}) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="group relative block px-3 py-2.5 no-underline"
+        style={{
+          background: "var(--ink-raised)",
+          border: "1px solid var(--fg-16)",
+          borderRadius: 2,
+          transition: "border-color 200ms cubic-bezier(0.2, 0.7, 0.2, 1)",
+        }}
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-250 group-hover:opacity-100"
+          style={{ boxShadow: "inset 0 0 0 1px var(--frost-glow)" }}
+        />
+        <div
+          className="relative font-mono text-[11px] uppercase tracking-[0.14em] transition-colors group-hover:text-[color:var(--frost)]"
+          style={{ color: "var(--fg-100)" }}
+        >
+          {title}
+        </div>
+        <div
+          className="relative mt-0.5 text-[11px]"
+          style={{ color: "var(--fg-52)" }}
+        >
+          {sub}
+        </div>
+      </Link>
+    </li>
   );
 }

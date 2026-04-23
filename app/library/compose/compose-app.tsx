@@ -157,34 +157,62 @@ export function ComposeApp({ items }: { items: Item[] }) {
       <div className="callout">
         <p>
           Pick 3–5 library items (usually 2–4 cases plus a prompt or template), add one
-          sentence of context, Claude drafts the proposal body. You'll edit from there.
+          sentence of context, Claude drafts the proposal body. You&apos;ll edit from there.
         </p>
       </div>
 
-      <h2 className="section-header mt-8 mb-3">Context</h2>
-      <table className="doc-table">
-        <tbody>
-          <tr>
-            <td style={{ width: "24%", verticalAlign: "top" }}>
-              <strong>Prospect (optional)</strong>
-            </td>
-            <td>
+      <section className="mt-10">
+        <div className="flex items-center gap-3">
+          <span className="kicker">Context</span>
+          <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+        </div>
+        <div
+          className="mt-4 overflow-hidden"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            borderRadius: 2,
+          }}
+        >
+          <div
+            className="grid grid-cols-1 gap-0 md:grid-cols-[220px_1fr]"
+            style={{ borderBottom: "1px solid var(--fg-16)" }}
+          >
+            <div
+              className="px-5 py-4"
+              style={{
+                background: "var(--ink-deep)",
+                borderRight: "1px solid var(--fg-16)",
+              }}
+            >
+              <div className="kicker-sm">Prospect (optional)</div>
+            </div>
+            <div className="px-5 py-4">
               <input
                 className="input"
                 value={accountName}
                 onChange={(e) => setAccountName(e.target.value)}
                 placeholder="e.g. Glacier Financial"
               />
-            </td>
-          </tr>
-          <tr>
-            <td style={{ width: "24%", verticalAlign: "top" }}>
-              <strong>Situation note</strong>
-              <div className="mt-0.5 text-[11px] text-ink-muted">
-                What's going on, what they care about.
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-0 md:grid-cols-[220px_1fr]">
+            <div
+              className="px-5 py-4"
+              style={{
+                background: "var(--ink-deep)",
+                borderRight: "1px solid var(--fg-16)",
+              }}
+            >
+              <div className="kicker-sm">Situation note</div>
+              <div
+                className="mt-1.5 text-[11px] leading-[1.5]"
+                style={{ color: "var(--fg-52)" }}
+              >
+                What&apos;s going on, what they care about.
               </div>
-            </td>
-            <td>
+            </div>
+            <div className="px-5 py-4">
               <textarea
                 className="textarea"
                 rows={3}
@@ -192,79 +220,139 @@ export function ComposeApp({ items }: { items: Item[] }) {
                 onChange={(e) => setSituation(e.target.value)}
                 placeholder="Advisor-facing AI tools uneven across 14 regional offices. Wants a program that compounds, not a one-off workshop. Budget signaled; legal reviewing MSA."
               />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <h2 className="section-header mt-8 mb-3">
-        Pick items ·{" "}
-        <span className="font-normal text-ink">
-          {picks.size} selected
-          {pickedCases > 0 && ` (${pickedCases} case${pickedCases === 1 ? "" : "s"})`}
-        </span>
-      </h2>
+      <section className="mt-12">
+        <div className="flex items-center gap-3">
+          <span className="kicker">Pick items</span>
+          <span
+            className="font-mono text-[10px] uppercase tracking-[0.16em]"
+            style={{ color: "var(--frost)" }}
+          >
+            {picks.size} selected
+            {pickedCases > 0 && ` · ${pickedCases} case${pickedCases === 1 ? "" : "s"}`}
+          </span>
+          <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+        </div>
 
-      <div className="flex flex-wrap items-center gap-2 border border-ink-border bg-bg-card px-4 py-3">
-        <input
-          type="search"
-          placeholder="Search title or description"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="input"
-          style={{ maxWidth: 320 }}
-        />
-        <span className="mx-2 h-4 w-px bg-ink-border" />
-        <KindChip active={kindFilter === "all"} onClick={() => setKindFilter("all")}>
-          All
-        </KindChip>
-        {(["case", "prompt", "template", "resource", "module"] as const).map((k) => (
-          <KindChip key={k} active={kindFilter === k} onClick={() => setKindFilter(k)}>
-            {KIND_LABEL[k]}
-          </KindChip>
-        ))}
-      </div>
-
-      <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-        {filtered.map((it) => {
-          const picked = picks.has(it.id);
-          return (
+        <div
+          className="mt-4 flex flex-wrap items-center gap-2 px-4 py-3"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            borderRadius: 2,
+          }}
+        >
+          <input
+            type="search"
+            placeholder="Search title or description"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="input"
+            style={{ maxWidth: 320, background: "var(--ink-deep)" }}
+          />
+          <span className="mx-1 h-4 w-px" style={{ background: "var(--fg-16)" }} />
+          <button
+            className="chip"
+            data-active={kindFilter === "all"}
+            onClick={() => setKindFilter("all")}
+          >
+            All
+          </button>
+          {(["case", "prompt", "template", "resource", "module"] as const).map((k) => (
             <button
-              key={it.id}
-              onClick={() => togglePick(it.id)}
-              className={`block w-full border text-left transition ${
-                picked ? "border-navy bg-ice" : "border-ink-border bg-white hover:border-navy"
-              }`}
+              key={k}
+              className="chip"
+              data-active={kindFilter === k}
+              onClick={() => setKindFilter(k)}
             >
-              <div className="flex items-start justify-between px-3 py-2">
-                <div className="flex-1">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
-                    {KIND_LABEL[it.kind]} · {it.stat}
-                  </div>
-                  <div className="mt-0.5 text-[12px] font-bold leading-[1.3] text-navy">
-                    {it.title}
-                  </div>
-                  <p className="mt-1 text-[11px] leading-[1.45] text-ink-muted line-clamp-2">
-                    {it.description}
-                  </p>
-                </div>
-                <div
-                  className={
-                    picked
-                      ? "ml-3 h-5 w-5 shrink-0 border border-navy bg-navy text-center text-[11px] font-bold text-white"
-                      : "ml-3 h-5 w-5 shrink-0 border border-ink-border bg-white"
-                  }
-                >
-                  {picked ? "✓" : ""}
-                </div>
-              </div>
+              {KIND_LABEL[k]}
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
 
-      <div className="mt-6 flex items-center justify-between border-t border-ink-border pt-4">
-        <div className="text-[11px] text-ink-muted">
+        <div
+          className="mt-4 grid grid-cols-1 gap-px overflow-hidden md:grid-cols-2"
+          style={{ background: "var(--fg-16)" }}
+        >
+          {filtered.map((it) => {
+            const picked = picks.has(it.id);
+            return (
+              <button
+                key={it.id}
+                onClick={() => togglePick(it.id)}
+                className="group relative block w-full text-left"
+                style={{
+                  background: picked
+                    ? "rgba(139, 178, 237, 0.08)"
+                    : "var(--ink-raised)",
+                  transition: "background 180ms cubic-bezier(0.2, 0.7, 0.2, 1)",
+                }}
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 transition-opacity duration-250"
+                  style={{
+                    boxShadow: picked
+                      ? "inset 0 0 0 1px var(--frost)"
+                      : "inset 0 0 0 1px var(--frost-glow)",
+                    opacity: picked ? 1 : 0,
+                  }}
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-250 group-hover:opacity-100"
+                  style={{ boxShadow: "inset 0 0 0 1px var(--frost-glow)" }}
+                />
+                <div className="relative flex items-start justify-between px-4 py-3">
+                  <div className="flex-1">
+                    <div className="kicker-sm">
+                      {KIND_LABEL[it.kind]} · {it.stat}
+                    </div>
+                    <div
+                      className="serif mt-1.5 text-[14px] leading-[1.25]"
+                      style={{ color: "var(--fg-100)" }}
+                    >
+                      {it.title}
+                    </div>
+                    <p
+                      className="mt-1.5 text-[11.5px] leading-[1.5]"
+                      style={{ color: "var(--fg-52)" }}
+                    >
+                      {it.description.length > 140
+                        ? it.description.slice(0, 140) + "…"
+                        : it.description}
+                    </p>
+                  </div>
+                  <div
+                    className="ml-3 flex h-5 w-5 shrink-0 items-center justify-center font-mono text-[11px]"
+                    style={{
+                      background: picked ? "var(--frost)" : "transparent",
+                      border: `1px solid ${picked ? "var(--frost)" : "var(--fg-32)"}`,
+                      color: "var(--ink-deep)",
+                      borderRadius: 2,
+                    }}
+                  >
+                    {picked ? "✓" : ""}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <div
+        className="mt-8 flex items-center justify-between border-t pt-5"
+        style={{ borderTopColor: "var(--fg-16)" }}
+      >
+        <div
+          className="font-mono text-[11px] uppercase tracking-[0.14em]"
+          style={{ color: "var(--fg-52)" }}
+        >
           {picks.size} selected · {pickedOther} prompts/templates · {pickedCases} cases
         </div>
         <button
@@ -277,63 +365,51 @@ export function ComposeApp({ items }: { items: Item[] }) {
       </div>
 
       {(running || draft) && (
-        <div className="mt-8">
-          <div className="flex items-center justify-between">
-            <h2 className="section-header mb-0">Draft</h2>
-            <div className="flex items-center gap-2">
-              {model && (
-                <span
-                  className={
+        <section className="mt-12">
+          <div className="flex items-center gap-3">
+            <span className="kicker">Draft</span>
+            <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+            {model && (
+              <span
+                className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+                style={{
+                  padding: "3px 8px",
+                  background:
+                    model === "mock" ? "transparent" : "var(--ink-deep)",
+                  border:
                     model === "mock"
-                      ? "border border-ink-border bg-bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted"
-                      : "border border-navy bg-ice px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy"
-                  }
-                >
-                  {model === "mock" ? "MOCK" : model.replace("claude-", "")}
-                </span>
-              )}
-              {draft && !running && (
-                <>
-                  <button onClick={copy} className="btn-secondary">
-                    {copied ? "Copied" : "Copy markdown"}
-                  </button>
-                  <button onClick={exportPdf} className="btn-secondary">
-                    Export PDF
-                  </button>
-                </>
-              )}
-            </div>
+                      ? "1px solid var(--fg-16)"
+                      : "1px solid var(--frost)",
+                  color: model === "mock" ? "var(--fg-52)" : "var(--frost)",
+                  borderRadius: 2,
+                }}
+              >
+                {model === "mock" ? "MOCK" : model.replace("claude-", "")}
+              </span>
+            )}
+            {draft && !running && (
+              <>
+                <button onClick={copy} className="btn-secondary">
+                  {copied ? "Copied" : "Copy markdown"}
+                </button>
+                <button onClick={exportPdf} className="btn-secondary">
+                  Export PDF
+                </button>
+              </>
+            )}
           </div>
           <div
-            className="card-surface prose-editorial mt-2"
+            className="prose-editorial mt-4 px-6 py-5"
+            style={{
+              background: "var(--ink-raised)",
+              border: "1px solid var(--fg-16)",
+              borderRadius: 2,
+            }}
             dangerouslySetInnerHTML={{ __html: html || "<p><em>Drafting…</em></p>" }}
           />
-        </div>
+        </section>
       )}
     </div>
-  );
-}
-
-function KindChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={
-        active
-          ? "border border-navy bg-navy px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white"
-          : "border border-ink-border bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-navy hover:border-navy"
-      }
-    >
-      {children}
-    </button>
   );
 }
 

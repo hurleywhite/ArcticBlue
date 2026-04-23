@@ -153,61 +153,103 @@ export function MeetingPrepClient({
   return (
     <>
       {nextMeeting && (
-        <div className="border border-navy">
-          <div className="flex flex-col gap-3 bg-navy px-6 py-4 text-white md:flex-row md:items-center md:justify-between">
+        <div
+          className="relative overflow-hidden"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            borderRadius: 2,
+          }}
+        >
+          <div
+            className="flex flex-col gap-3 px-6 py-5 md:flex-row md:items-center md:justify-between"
+            style={{
+              background: "var(--ink-deep)",
+              borderBottom: "1px solid var(--fg-16)",
+            }}
+          >
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.12em] opacity-80">
+              <div className="kicker-sm flex items-center gap-2">
+                <span
+                  aria-hidden
+                  className="inline-block h-1.5 w-1.5 rounded-full"
+                  style={{
+                    background: "var(--amber)",
+                    animation: "data-pulse 2.4s ease-in-out infinite",
+                  }}
+                />
                 {nextMeeting.whenLabel} · {nextMeeting.duration} min · {nextMeeting.location}
               </div>
-              <div className="mt-0.5 text-[16px] font-bold leading-[1.2]">
+              <div
+                className="serif mt-2 text-[20px] leading-[1.2]"
+                style={{ color: "var(--fg-100)" }}
+              >
                 {nextMeeting.title}
               </div>
             </div>
-            <button onClick={run} disabled={running} className="btn-primary bg-white text-navy">
+            <button onClick={run} disabled={running} className="btn-primary">
               {running ? "Drafting…" : brief ? "Re-run prep" : "Run prep →"}
             </button>
           </div>
 
-          <div className="bg-white px-6 py-5">
-            <h3 className="section-header mb-2">Our notes going in</h3>
-            <p className="text-[13px] leading-[1.6]">{notes}</p>
-            <div className="mt-3 border-t border-ink-border pt-3 text-[11px] text-ink-muted">
-              With: {pocName} ({pocTitle}) · <code>{pocEmail}</code>
+          <div className="px-6 py-5">
+            <div className="kicker-sm">Our notes going in</div>
+            <p
+              className="mt-2 text-[13px] leading-[1.65]"
+              style={{ color: "var(--fg-72)" }}
+            >
+              {notes}
+            </p>
+            <div
+              className="mt-4 border-t pt-3 font-mono text-[11px]"
+              style={{ borderTopColor: "var(--fg-16)", color: "var(--fg-52)" }}
+            >
+              With: {pocName} ({pocTitle}) · {pocEmail}
             </div>
           </div>
         </div>
       )}
 
       {(running || brief) && (
-        <div className="mt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="section-header mb-0">Prep brief</h2>
-            <div className="flex items-center gap-2">
-              {model && (
-                <span
-                  className={
+        <div className="mt-8">
+          <div className="flex items-center gap-3">
+            <span className="kicker">Prep brief</span>
+            <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+            {model && (
+              <span
+                className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+                style={{
+                  padding: "3px 8px",
+                  background: model === "mock" ? "transparent" : "var(--ink-deep)",
+                  border:
                     model === "mock"
-                      ? "border border-ink-border bg-bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted"
-                      : "border border-navy bg-ice px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy"
-                  }
-                >
-                  {model === "mock" ? "MOCK" : model.replace("claude-", "")}
-                </span>
-              )}
-              {brief && !running && (
-                <>
-                  <button onClick={copy} className="btn-secondary">
-                    {copied ? "Copied" : "Copy markdown"}
-                  </button>
-                  <button onClick={exportPdf} className="btn-secondary">
-                    Export PDF
-                  </button>
-                </>
-              )}
-            </div>
+                      ? "1px solid var(--fg-16)"
+                      : "1px solid var(--frost)",
+                  color: model === "mock" ? "var(--fg-52)" : "var(--frost)",
+                  borderRadius: 2,
+                }}
+              >
+                {model === "mock" ? "MOCK" : model.replace("claude-", "")}
+              </span>
+            )}
+            {brief && !running && (
+              <>
+                <button onClick={copy} className="btn-secondary">
+                  {copied ? "Copied" : "Copy markdown"}
+                </button>
+                <button onClick={exportPdf} className="btn-secondary">
+                  Export PDF
+                </button>
+              </>
+            )}
           </div>
           <div
-            className="card-surface prose-editorial mt-2"
+            className="prose-editorial mt-4 px-6 py-5"
+            style={{
+              background: "var(--ink-raised)",
+              border: "1px solid var(--fg-16)",
+              borderRadius: 2,
+            }}
             dangerouslySetInnerHTML={{ __html: html || "<p><em>Drafting…</em></p>" }}
           />
         </div>

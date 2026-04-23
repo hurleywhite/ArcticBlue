@@ -92,26 +92,42 @@ export function FollowupDrafter({
   );
 
   return (
-    <div className="mt-10">
-      <div className="flex items-center justify-between">
-        <h2 className="section-header mb-0">Follow-up drafter</h2>
+    <div className="mt-12">
+      <div className="flex items-center gap-3">
+        <span className="kicker">Follow-up drafter</span>
+        <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
         <button
           onClick={() => setOpen(!open)}
-          className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy hover:underline"
+          className="font-mono text-[10px] uppercase tracking-[0.16em] transition-opacity hover:opacity-80"
+          style={{ color: "var(--frost)" }}
         >
           {open ? "Collapse" : draft ? "Open · has draft" : "Open"}
         </button>
       </div>
 
       {open && (
-        <div className="mt-3 border border-ink-border bg-white">
-          <div className="border-b border-ink-border bg-bg-card px-5 py-3 text-[12px] text-ink-muted">
+        <div
+          className="mt-4 overflow-hidden"
+          style={{
+            background: "var(--ink-raised)",
+            border: "1px solid var(--fg-16)",
+            borderRadius: 2,
+          }}
+        >
+          <div
+            className="px-6 py-3 text-[12px]"
+            style={{
+              background: "var(--ink-deep)",
+              borderBottom: "1px solid var(--fg-16)",
+              color: "var(--fg-72)",
+            }}
+          >
             After a call: capture what happened + next steps. Claude drafts the email and a
             proposal outline.
           </div>
-          <div className="px-5 py-4">
-            <div className="mb-3">
-              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
+          <div className="px-6 py-5">
+            <div className="mb-4">
+              <div className="kicker-sm mb-1.5">
                 What happened in the meeting
               </div>
               <textarea
@@ -123,8 +139,8 @@ export function FollowupDrafter({
                 disabled={running}
               />
             </div>
-            <div className="mb-3">
-              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
+            <div className="mb-4">
+              <div className="kicker-sm mb-1.5">
                 Next steps (if agreed)
               </div>
               <textarea
@@ -136,20 +152,15 @@ export function FollowupDrafter({
                 disabled={running}
               />
             </div>
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted">
-                Tone
-              </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="kicker-sm">Tone</span>
               {(["direct", "warm", "executive"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTone(t)}
                   disabled={running}
-                  className={
-                    tone === t
-                      ? "border border-navy bg-navy px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white"
-                      : "border border-ink-border bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-navy hover:border-navy"
-                  }
+                  className="chip"
+                  data-active={tone === t}
                 >
                   {t}
                 </button>
@@ -164,32 +175,45 @@ export function FollowupDrafter({
             </div>
           </div>
           {(running || draft) && (
-            <div className="border-t border-ink-border px-5 py-4">
-              <div className="flex items-center justify-between">
-                <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
-                  Draft
-                </div>
-                <div className="flex items-center gap-2">
-                  {model && (
-                    <span
-                      className={
+            <div
+              className="border-t px-6 py-5"
+              style={{ borderTopColor: "var(--fg-16)" }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="kicker-sm">Draft</span>
+                <span className="h-px flex-1" style={{ background: "var(--fg-16)" }} />
+                {model && (
+                  <span
+                    className="font-mono text-[9px] font-medium uppercase tracking-[0.16em]"
+                    style={{
+                      padding: "3px 8px",
+                      background:
+                        model === "mock" ? "transparent" : "var(--ink-deep)",
+                      border:
                         model === "mock"
-                          ? "border border-ink-border bg-bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted"
-                          : "border border-navy bg-ice px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy"
-                      }
-                    >
-                      {model === "mock" ? "MOCK" : model.replace("claude-", "")}
-                    </span>
-                  )}
-                  {draft && !running && (
-                    <button onClick={copy} className="btn-secondary">
-                      {copied ? "Copied" : "Copy markdown"}
-                    </button>
-                  )}
-                </div>
+                          ? "1px solid var(--fg-16)"
+                          : "1px solid var(--frost)",
+                      color:
+                        model === "mock" ? "var(--fg-52)" : "var(--frost)",
+                      borderRadius: 2,
+                    }}
+                  >
+                    {model === "mock" ? "MOCK" : model.replace("claude-", "")}
+                  </span>
+                )}
+                {draft && !running && (
+                  <button onClick={copy} className="btn-secondary">
+                    {copied ? "Copied" : "Copy markdown"}
+                  </button>
+                )}
               </div>
               <div
-                className="prose-editorial card-surface mt-2"
+                className="prose-editorial mt-3 px-5 py-4"
+                style={{
+                  background: "var(--ink-deep)",
+                  border: "1px solid var(--fg-16)",
+                  borderRadius: 2,
+                }}
                 dangerouslySetInnerHTML={{ __html: html || "<p><em>Drafting…</em></p>" }}
               />
             </div>
