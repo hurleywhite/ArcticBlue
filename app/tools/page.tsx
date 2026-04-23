@@ -21,7 +21,7 @@ export default function ToolsPage() {
         </p>
       </div>
 
-      <h2 className="section-header mt-10 mb-3">Three sections</h2>
+      <h2 className="section-header mt-10 mb-3">Sections</h2>
       <div className="border border-ink-border">
         <ToolRow
           n="01"
@@ -43,6 +43,13 @@ export default function ToolsPage() {
           body="The output scaffolding for common AI-assisted deliverables — email, brief, analysis, plan. Fill variables, copy, export to PDF, or pipe into Practice."
           href="/tools/templates"
           cta="Browse templates →"
+        />
+        <ToolRow
+          n="04"
+          title="Event sourcer — partner-facing conference finder"
+          body="Partner inputs in (focus, audience, themes, window), structured event list out. Primary + halo streams, speaking/sponsorship routes verified, sorted by date. Powered by Dust."
+          href="/tools/event-sourcer"
+          cta="Open Event Sourcer →"
           last
         />
       </div>
