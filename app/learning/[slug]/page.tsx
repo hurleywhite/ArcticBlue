@@ -225,6 +225,14 @@ export default async function ModuleDetail({
             ))}
           </div>
 
+          <h3 className="section-header mt-8 mb-2">Admin</h3>
+          <Link
+            href={`/admin/modules/${m.id}`}
+            className="inline-block text-[11px] font-bold uppercase tracking-[0.12em] text-navy hover:underline"
+          >
+            Edit in CMS →
+          </Link>
+
           {related.length > 0 && (
             <>
               <h3 className="section-header mt-8 mb-2">Related</h3>

@@ -64,9 +64,12 @@ export default function AdminCanvasTemplatesPage() {
                   </span>
                 </td>
                 <td>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-muted">
+                  <Link
+                    href={`/admin/canvas-templates/${encodeURIComponent(key)}`}
+                    className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy hover:underline"
+                  >
                     Edit →
-                  </span>
+                  </Link>
                 </td>
               </tr>
             );

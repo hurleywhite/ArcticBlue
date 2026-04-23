@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { sessionKey, useStarState } from "@/lib/state/stars";
 import { useProgressState } from "@/lib/state/progress";
 import { usePracticeState } from "@/lib/state/practice";
@@ -118,12 +118,60 @@ export function DashboardHome() {
         </div>
       )}
 
+      {/* Your stars — mini quadrant peek */}
+      {starredOps.length > 0 && (
+        <>
+          <h2 className="section-header mt-10 mb-3">Your starred opportunities</h2>
+          <table className="doc-table">
+            <thead>
+              <tr>
+                <th style={{ width: "14%" }}>Category</th>
+                <th>Opportunity</th>
+                <th style={{ width: "22%" }}>First experiment</th>
+                <th style={{ width: "12%" }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {starredOps.map((op) => (
+                <tr key={op.id}>
+                  <td>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-navy">
+                      {op.category}
+                    </span>
+                  </td>
+                  <td>
+                    <strong>{op.title}</strong>
+                    <div className="mt-0.5 text-ink-muted">{op.tagline}</div>
+                  </td>
+                  <td className="text-[11px] italic text-ink">{op.experiment}</td>
+                  <td>
+                    <Link
+                      href={`/tools/practice?seed=canvas&id=${op.id}`}
+                      className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy hover:underline"
+                    >
+                      Practice →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
       {/* Recommended for you */}
       <h2 className="section-header mt-10 mb-3">Recommended for you</h2>
       {recs && recs.topSix.length > 0 ? (
         <div className="grid grid-cols-1 gap-0 border border-ink-border md:grid-cols-3">
           {recs.topSix.map((item, idx) => (
-            <RecommendCell key={`${item.kind}-${item.id}`} item={item} isLast={(idx + 1) % 3 === 0} />
+            <RecommendCell
+              key={`${item.kind}-${item.id}`}
+              item={item}
+              isLast={(idx + 1) % 3 === 0}
+              userRole={starState.lastRole!}
+              userIndustry={starState.lastIndustry!}
+              starredOps={starredOps}
+            />
           ))}
         </div>
       ) : (
@@ -267,9 +315,15 @@ export function DashboardHome() {
 function RecommendCell({
   item,
   isLast,
+  userRole,
+  userIndustry,
+  starredOps,
 }: {
   item: RecommendationItem;
   isLast: boolean;
+  userRole: string;
+  userIndustry: string;
+  starredOps: Array<{ id: string; title: string; category: string }>;
 }) {
   const kindLabel =
     item.kind === "module" ? "Learning" : item.kind === "use_case" ? "Use Case" : "Prompt";
@@ -292,9 +346,48 @@ function RecommendCell({
         ? `/use-cases/${item.slug}`
         : `/tools/prompts/${item.slug}`;
 
+  const [justification, setJustification] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [modelLabel, setModelLabel] = useState<string | null>(null);
+
+  const fetchJustification = async () => {
+    if (justification || pending) return;
+    setPending(true);
+    try {
+      const res = await fetch("/api/recommend/justify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userRole,
+          userIndustry,
+          starredOpportunities: starredOps.map((o) => ({
+            id: o.id,
+            title: o.title,
+            category: o.category,
+          })),
+          item: {
+            kind: item.kind,
+            title: item.title,
+            description: body,
+            tags: (item as { tags?: unknown }).tags ?? {},
+          },
+        }),
+      });
+      const data = await res.json();
+      setJustification(data.text);
+      setModelLabel(data.modelLabel ?? (data.model === "mock" ? "Mock" : data.model));
+    } catch {
+      setJustification("[Justification unavailable.]");
+    } finally {
+      setPending(false);
+    }
+  };
+
   return (
     <Link
       href={href}
+      onMouseEnter={fetchJustification}
+      onFocus={fetchJustification}
       className={`group block bg-bg-card px-5 py-4 transition hover:bg-ice ${
         isLast ? "" : "md:border-r md:border-ink-border"
       } border-b border-ink-border md:border-b-0`}
@@ -304,6 +397,19 @@ function RecommendCell({
       </div>
       <div className="mt-1 text-[14px] font-bold text-ink">{item.title}</div>
       <p className="mt-1 line-clamp-3 text-[12px] leading-[1.5] text-ink">{body}</p>
+      {justification && (
+        <div className="mt-2 border-l-2 border-navy bg-white/60 pl-2 text-[11px] italic leading-[1.4] text-ink">
+          {justification}
+          {modelLabel && (
+            <span className="mt-0.5 block text-[9px] font-bold not-italic uppercase tracking-[0.12em] text-ink-muted">
+              {modelLabel}
+            </span>
+          )}
+        </div>
+      )}
+      {pending && !justification && (
+        <div className="mt-2 text-[11px] italic text-ink-muted">Thinking…</div>
+      )}
       <div className="mt-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.12em] text-navy">
         <span>Open →</span>
         <span className="text-ink-muted">match {item.score.toFixed(1)}</span>

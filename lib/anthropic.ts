@@ -16,6 +16,12 @@ export const MODELS = {
   RECOMMEND: "claude-opus-4-7",
 } as const;
 
+export const MODEL_LABELS: Record<string, string> = {
+  "claude-sonnet-4-6": "Claude Sonnet 4.6",
+  "claude-opus-4-7": "Claude Opus 4.7",
+  "claude-haiku-4-5-20251001": "Claude Haiku 4.5",
+};
+
 export function anthropic() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

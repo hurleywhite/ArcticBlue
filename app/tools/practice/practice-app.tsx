@@ -36,6 +36,7 @@ export function PracticeApp() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [draft, setDraft] = useState("");
+  const [modelInfo, setModelInfo] = useState<{ source: string; model: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const active = state.sessions.find((s) => s.id === activeId) ?? null;
@@ -168,6 +169,10 @@ export function PracticeApp() {
       if (!res.ok || !res.body) {
         throw new Error(`Chat request failed: ${res.status}`);
       }
+      setModelInfo({
+        source: res.headers.get("X-Arcticmind-Source") ?? "unknown",
+        model: res.headers.get("X-Arcticmind-Model") ?? "unknown",
+      });
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -345,12 +350,26 @@ export function PracticeApp() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={exportSession}
-                className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy hover:underline"
-              >
-                Export
-              </button>
+              <div className="flex items-center gap-3">
+                {modelInfo && (
+                  <span
+                    className={
+                      modelInfo.source === "mock"
+                        ? "border border-ink-border bg-bg-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-muted"
+                        : "border border-navy bg-ice px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-navy"
+                    }
+                    title={modelInfo.source === "mock" ? "Mock mode — no API key" : `Model: ${modelInfo.model}`}
+                  >
+                    {modelInfo.source === "mock" ? "MOCK" : modelInfo.model.replace("claude-", "")}
+                  </span>
+                )}
+                <button
+                  onClick={exportSession}
+                  className="text-[11px] font-bold uppercase tracking-[0.12em] text-navy hover:underline"
+                >
+                  Export
+                </button>
+              </div>
             </div>
             <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5">
               {active.messages.length === 0 && (

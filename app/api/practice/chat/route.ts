@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache, no-transform",
         "X-Arcticmind-Source": "anthropic",
+        "X-Arcticmind-Model": MODELS.PRACTICE,
       },
     });
   } catch (err) {
@@ -122,6 +123,7 @@ function mockStream(body: { messages: Array<{ role: string; content: string }>; 
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
       "X-Arcticmind-Source": "mock",
+      "X-Arcticmind-Model": "mock",
     },
   });
 }
