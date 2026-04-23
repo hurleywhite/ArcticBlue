@@ -7,7 +7,12 @@ import { RESOURCES } from "@/lib/content/resources";
 import { MODULES } from "@/lib/content/modules";
 import { DELIVERABLES } from "@/lib/content/deliverables";
 import { FACILITATORS } from "@/lib/content/facilitators";
-import { LandingHero, LandingSurfaces, NextUpStrip } from "./landing-surfaces";
+import {
+  FeaturedToolStrip,
+  LandingHero,
+  LandingSurfaces,
+  NextUpStrip,
+} from "./landing-surfaces";
 
 /*
   Landing page. Hero is Instrument-Serif display on the ink canvas,
@@ -39,6 +44,8 @@ export default function HomePage() {
         />
       )}
 
+      <FeaturedToolStrip />
+
       <LandingSurfaces
         accountCount={ACCOUNTS.length}
         deliverableCount={DELIVERABLES.length}
@@ -59,9 +66,9 @@ export default function HomePage() {
           style={{ background: "var(--fg-16)" }}
         >
           <ShortcutTile
-            href="/deliverables/interview-synthesis"
-            title="Interview synthesis"
-            sub="Branded client brief"
+            href="/tools/event-sourcer"
+            title="Event sourcer"
+            sub="Partner · Dust-backed"
           />
           <ShortcutTile
             href="/facilitators"

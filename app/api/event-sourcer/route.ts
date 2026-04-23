@@ -12,13 +12,18 @@ import {
   Each event is `data: {"text": "..."}\n\n`.
   Terminates with `data: [DONE]\n\n`.
 
-  Env vars expected on Vercel (confirm names match):
-    DUST_API_KEY       — Dust personal or workspace API key
-    DUST_WORKSPACE_ID  — the Dust workspace (sId)
-    DUST_AGENT_ID      — the assistant/agent to message (sId)
+  Env vars on Vercel:
+    DUST_API_KEY       — required. Dust personal or workspace API key.
+    DUST_WORKSPACE_ID  — required. The Dust workspace sId (visible in
+                          the URL: dust.tt/w/<sId>/...).
+    DUST_AGENT_ID      — optional. Defaults to "dust" (the built-in
+                          general assistant). Override with the sId of
+                          a custom assistant you've created in Dust
+                          with the event-sourcer system prompt baked
+                          in — lets you skip prepending the prompt.
 
-  If any var is missing we fall back to a mock stream so the UI still
-  renders end-to-end in preview.
+  If the API key or workspace id is missing we fall back to a mock
+  stream so the UI still renders end-to-end in preview.
 */
 
 export const runtime = "nodejs";
@@ -53,9 +58,9 @@ export async function POST(req: NextRequest) {
 
   const apiKey = process.env.DUST_API_KEY;
   const workspaceId = process.env.DUST_WORKSPACE_ID;
-  const agentId = process.env.DUST_AGENT_ID;
+  const agentId = process.env.DUST_AGENT_ID || "dust";
 
-  if (!apiKey || !workspaceId || !agentId) {
+  if (!apiKey || !workspaceId) {
     return mockStream(inputs);
   }
 

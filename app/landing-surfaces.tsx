@@ -146,6 +146,85 @@ export function NextUpStrip({
   );
 }
 
+export function FeaturedToolStrip() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: EASE, delay: 0.45 }}
+      className="relative mb-10 overflow-hidden rounded-[4px]"
+      style={{
+        background:
+          "linear-gradient(135deg, var(--ink-raised) 0%, var(--ink-deep) 55%, var(--ink-raised) 100%)",
+        border: "1px solid var(--frost-glow)",
+      }}
+    >
+      {/* Frost halo in top-right */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full opacity-40"
+        style={{
+          background:
+            "radial-gradient(circle, var(--frost) 0%, transparent 68%)",
+          filter: "blur(18px)",
+        }}
+      />
+      {/* Left frost accent rail */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-0 h-full w-[2px]"
+        style={{ background: "var(--frost)" }}
+      />
+
+      <div className="relative flex flex-col items-start gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
+        <div className="flex items-start gap-4">
+          <span
+            aria-hidden
+            className="mt-2 inline-block h-2 w-2 rounded-full"
+            style={{
+              background: "var(--frost)",
+              animation: "breathe-opacity 3.8s ease-in-out infinite",
+            }}
+          />
+          <div>
+            <div className="kicker flex items-center gap-2">
+              <span style={{ color: "var(--frost)" }}>New · Partner tools</span>
+              <span style={{ color: "var(--fg-32)" }}>·</span>
+              <span>Powered by Dust</span>
+            </div>
+            <div
+              className="serif-tight mt-3 text-[28px] leading-[1.1] md:text-[34px]"
+              style={{ color: "var(--fg-100)" }}
+            >
+              Event sourcer
+              <span
+                className="italic"
+                style={{ color: "var(--frost)" }}
+              >
+                {" "}
+                — in-person events, tailored per partner.
+              </span>
+            </div>
+            <p
+              className="mt-3 max-w-2xl text-[14px] leading-[1.6]"
+              style={{ color: "var(--fg-72)" }}
+            >
+              Partner inputs in (focus, audience, themes, window), a filtered
+              primary + halo event list out. Verified dates, speaking routes,
+              sponsorship routes. Sorted by date. Copy or download per event.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
+          <Link href="/tools/event-sourcer" className="btn-primary">
+            Open event sourcer →
+          </Link>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export function LandingSurfaces({
   accountCount,
   deliverableCount,
